@@ -10,16 +10,16 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
-import { loginWithEmailAndPassword } from "@/lib/auth.firebase";
+import { signUpWithEmailAndPassword } from "@/lib/auth.firebase";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useActionState, useState } from "react";
 import { Link } from "react-router-dom";
 
-export function LoginPage() {
+export function RegisterPage() {
    const [showPassword, setShowPassword] = useState<boolean>(false);
-   const [formState, formAction, isFormPending] = useActionState(doLoginWithEmail, null);
+   const [formState, formAction, isFormPending] = useActionState(doRegisterWithEmail, null);
 
-   async function doLoginWithEmail(_: unknown, data: FormData) {
+   async function doRegisterWithEmail(_: unknown, data: FormData) {
       const email = data.get("email") || "";
       const password = data.get("password") || "";
 
@@ -34,7 +34,7 @@ export function LoginPage() {
       }
 
       try {
-         const result = await loginWithEmailAndPassword(String(email), String(password));
+         const result = await signUpWithEmailAndPassword(String(email), String(password));
 
          if (result.error) {
             return {
@@ -58,8 +58,8 @@ export function LoginPage() {
       <form action={formAction} className="w-100 max-w-full mx-auto">
          <FieldGroup>
             <FieldSet>
-               <FieldLegend className="text-xl!">Log in</FieldLegend>
-               <FieldDescription>Log in to use TaskList</FieldDescription>
+               <FieldLegend className="text-xl!">Register</FieldLegend>
+               <FieldDescription>Register to get started</FieldDescription>
                <FieldGroup>
                   <Field data-invalid={!!formState?.fieldErrors?.email}>
                      <FieldLabel htmlFor="email">Email address</FieldLabel>
@@ -96,15 +96,15 @@ export function LoginPage() {
             </FieldSet>
             <Field orientation="horizontal">
                <Button type="submit" className="w-full" disabled={isFormPending}>
-                  {isFormPending ? "Checking..." : "Check password"}
+                  {isFormPending ? "Registering..." : "Register"}
                </Button>
             </Field>
          </FieldGroup>
          <hr className="my-4" />
          <p>
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-300 underline">
-               Make one now.
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-300 underline">
+               Log in.
             </Link>
          </p>
       </form>
