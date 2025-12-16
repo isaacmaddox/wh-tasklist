@@ -347,7 +347,7 @@ function TaskItem({ defaultTask, taskId }: TaskItemProps) {
               className={task.flagged ? "fill-yellow-600 dark:fill-yellow-200 stroke-yellow-600 dark:stroke-yellow-200" : "fill-transparent"}
             />
           </Button>
-          <Button variant="ghost-dim" size="icon-sm" onClick={() => setIsEditing(true)}>
+          <Button variant="ghost-dim" size="icon-sm" onClick={() => setIsEditing(true)} disabled={task.completed}>
             <EditIcon />
           </Button>
           <Button variant="destructive-ghost" size="icon-sm" onClick={doDeleteTask}>
