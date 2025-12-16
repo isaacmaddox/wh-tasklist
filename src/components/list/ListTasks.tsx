@@ -30,11 +30,18 @@ function getLocalDateFromInput(value: string) {
 export function ListTasks() {
   const ctx = useContext(ListPageContext);
   const newTaskInputRef = useRef<HTMLInputElement>(null);
+  const [filterQuery, setFilterQuery] = useState<string>("");
   const [newTaskName, setNewTaskName] = useState<string>("");
   const [newTaskDate, setNewTaskDate] = useState<string>("");
   if (!ctx) return;
   const { list, setList, doLiveUpdates, canUserModifyList } = ctx;
   if (!list) return;
+
+  const tasks = _.orderBy(
+    _.filter(Object.entries(list.tasks || {}), ([, task]) => task.name.toLowerCase().trim().includes(filterQuery.toLowerCase().trim())),
+    [([, t]) => new Date(t.due_date)],
+    "asc"
+  );
 
   async function doAddTask() {
     const name = newTaskName.trim();
@@ -79,6 +86,15 @@ export function ListTasks() {
 
   return (
     <ul className="grid grid-cols-[max-content_1fr_max-content_max-content_max-content_max-content] gap-3 gap-y-4 task-list">
+      <li className="search-row grid grid-cols-subgrid col-span-full items-center pt-3 border-t border-border">
+        <Input
+          type="text"
+          placeholder="Search for a task..."
+          className="col-span-2"
+          value={filterQuery}
+          onChange={(e) => setFilterQuery(e.currentTarget.value)}
+        />
+      </li>
       <li className="grid grid-cols-subgrid col-span-full items-center pb-3 border-b border-border">
         <p className="text-base font-semibold col-span-2">Task</p>
         <p className="text-base font-semibold">Due Date</p>
@@ -118,7 +134,7 @@ export function ListTasks() {
           </Button>
         </li>
       )}
-      {_.orderBy(Object.entries(list.tasks || {}), [([, t]) => new Date(t.due_date)], "asc").map(([taskId, task]) => {
+      {tasks.map(([taskId, task]) => {
         return <TaskItem key={taskId} taskId={taskId} defaultTask={task} />;
       })}
     </ul>
@@ -277,7 +293,7 @@ function TaskItem({ defaultTask, taskId }: TaskItemProps) {
     <li
       key={taskId}
       className={cn(
-        "group/task-item grid relative grid-cols-subgrid col-span-full items-center starting:opacity-0 starting:-translate-x-8 transition-[opacity,transform_1s]",
+        "group/task-item grid relative grid-cols-subgrid col-span-full items-center starting:opacity-0 transition-opacity",
         "after:absolute after:transition-transform after:origin-left after:inset-x-0 after:col-start-2 after:col-span-2 after:h-full after:inset-y-0 after:my-auto after:pointer-events-none",
         !task.completed && "after:scale-x-0"
       )}>

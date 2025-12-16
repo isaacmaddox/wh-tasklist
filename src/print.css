@@ -58,13 +58,17 @@
     display: none !important;
   }
 
-  button[role="checkbox"] {
+  button[role="checkbox"],
+  .flag-button {
     box-shadow: none !important;
     border-color: transparent !important;
     border-radius: 0px !important;
     margin-top: 0 !important;
-    height: calc(var(--spacing) * 8) !important;
-    width: calc(var(--spacing) * 8) !important;
+    height: calc(var(--spacing) * 6) !important;
+    width: calc(var(--spacing) * 6) !important;
+    align-self: flex-start !important;
+    grid-column: 1 / span 1 !important;
+    grid-row: 1 !important;
 
     &[aria-checked="true"] {
       background-color: red;
@@ -75,8 +79,17 @@
     display: none !important;
   }
 
+  .search-row {
+    display: none !important;
+  }
+
   .group\/task-item {
     align-items: center !important;
+
+    .flag-button {
+      display: flex !important;
+      padding: 0 !important;
+    }
 
     &:has([aria-checked="true"]) {
       opacity: 0.375 !important;
@@ -88,26 +101,23 @@
       &::after {
         display: none !important;
       }
-    }
 
-    .flag-button {
-      display: flex !important;
-      grid-column: 1 / span 1 !important;
-      grid-row: 1 !important;
-      padding: 0 !important;
+      .flag-button {
+        display: none !important;
+      }
     }
   }
 
   .task-list {
-    grid-template-columns: min-content min-content 1fr max-content !important;
+    grid-template-columns: min-content 1fr max-content !important;
     gap: 0.5em;
 
-    &>li:nth-child(3) {
+    &>li:nth-child(4) {
       margin-top: 0.1in;
     }
 
     &>li>p:first-child {
-      grid-column: 3 / span 1;
+      grid-column: 2 / span 1;
     }
   }
 
