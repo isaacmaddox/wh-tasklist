@@ -254,7 +254,7 @@ function TaskItem({ defaultTask, taskId }: TaskItemProps) {
     try {
       const taskRef = ref(db, `/lists/${task.list_id}/tasks/${taskId}`);
       await update(taskRef, {
-        due_date: getLocalDateFromInput(updatedTaskDate),
+        flagged,
       });
 
       toast.success("Updated task.");
