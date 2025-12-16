@@ -31,4 +31,5 @@ export interface Task {
   name: string;
   completed: boolean;
   due_date: number;
+  flagged?: boolean;
 }
