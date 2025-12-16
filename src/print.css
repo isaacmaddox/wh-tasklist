@@ -22,6 +22,10 @@
     stroke: gold !important;
   }
 
+  .flag-button svg:not(.fill-yellow-600, .dark\:fill-yellow-200) {
+    opacity: 0 !important;
+  }
+
   header {
     gap: 0;
   }
