@@ -1,103 +1,118 @@
 @media print {
-   body,
-   html,
-   #root {
-      height: auto !important;
-   }
 
-   * {
-      scrollbar-width: 0px;
-      font-size: 12pt;
+  body,
+  html,
+  #root {
+    height: auto !important;
+  }
 
-      &::-webkit-scrollbar {
-         display: none !important;
-         width: 0 !important;
+  * {
+    scrollbar-width: 0px;
+    font-size: 12pt;
+
+    &::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+    }
+  }
+
+  .fill-yellow-600,
+  .dark\:fill-yellow-200 {
+    fill: gold !important;
+    stroke: gold !important;
+  }
+
+  header {
+    gap: 0;
+  }
+
+  h1 {
+    font-size: 20pt;
+  }
+
+  main {
+    padding: 0 !important;
+    width: unset !important;
+    max-width: unset !important;
+  }
+
+  *:not(hr) {
+    color: black !important;
+    background-color: white !important;
+    border-color: hsl(0 0 90) !important;
+  }
+
+  .text-destructive {
+    color: red !important;
+  }
+
+  header a {
+    display: none;
+  }
+
+  button:not([role="checkbox"]) {
+    display: none !important;
+  }
+
+  button[role="checkbox"] {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    border-radius: 0px !important;
+    margin-top: 0 !important;
+    height: calc(var(--spacing) * 8) !important;
+    width: calc(var(--spacing) * 8) !important;
+
+    &[aria-checked="true"] {
+      background-color: red;
+    }
+  }
+
+  .add-task-row {
+    display: none !important;
+  }
+
+  .group\/task-item {
+    align-items: center !important;
+
+    &:has([aria-checked="true"]) {
+      opacity: 0.375 !important;
+
+      label {
+        text-decoration: line-through;
       }
-   }
 
-   header {
-      gap: 0;
-   }
+      &::after {
+        display: none !important;
+      }
+    }
 
-   h1 {
-      font-size: 20pt;
-   }
-
-   main {
+    .flag-button {
+      display: flex !important;
+      grid-column: 1 / span 1 !important;
+      grid-row: 1 !important;
       padding: 0 !important;
-      width: unset !important;
-      max-width: unset !important;
-   }
+    }
+  }
 
-   *:not(hr) {
-      color: black !important;
-      background-color: white !important;
-      border-color: hsl(0 0 90) !important;
-   }
+  .task-list {
+    grid-template-columns: min-content min-content 1fr max-content !important;
+    gap: 0.5em;
 
-   .text-destructive {
-      color: red !important;
-   }
+    &>li:nth-child(3) {
+      margin-top: 0.1in;
+    }
 
-   header a {
-      display: none;
-   }
+    &>li>p:first-child {
+      grid-column: 3 / span 1;
+    }
+  }
 
-   button:not([role="checkbox"]) {
-      display: none !important;
-   }
+  .leading-9 {
+    line-height: 1.5 !important;
+  }
 
-   button[role="checkbox"] {
-      box-shadow: none !important;
-      border-color: transparent !important;
-      border-radius: 0px !important;
-      margin-top: 0.5lh;
-      translate: 0 -50%;
-
-      &[aria-checked="true"] {
-         background-color: red;
-      }
-   }
-
-   .add-task-row {
-      display: none !important;
-   }
-
-   .group\/task-item {
-      align-items: start !important;
-
-      &:has([aria-checked="true"]) {
-         opacity: 0.375 !important;
-
-         label {
-            text-decoration: line-through;
-         }
-
-         &::after {
-            display: none !important;
-         }
-      }
-   }
-
-   .task-list {
-      grid-template-columns: min-content 1fr max-content !important;
-      gap: 0.5em;
-
-      & > li:nth-child(3) {
-         margin-top: 0.1in;
-      }
-
-      & > li > p:first-child {
-         grid-column: 2 / span 1;
-      }
-   }
-
-   .leading-9 {
-      line-height: 1.5 !important;
-   }
-
-   @page {
-      size: auto;
-      margin: 0.5in;
-   }
+  @page {
+    size: auto;
+    margin: 0.5in;
+  }
 }

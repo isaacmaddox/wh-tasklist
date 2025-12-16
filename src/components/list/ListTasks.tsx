@@ -326,7 +326,7 @@ function TaskItem({ defaultTask, taskId }: TaskItemProps) {
       )}
       {!isEditing && (
         <>
-          <Button variant="ghost-dim" size="icon-sm" onClick={() => doFlagTask(!(task.flagged ?? false))}>
+          <Button className="flag-button" variant="ghost-dim" size="icon-sm" onClick={() => doFlagTask(!(task.flagged ?? false))}>
             <FlagIcon
               className={task.flagged ? "fill-yellow-600 dark:fill-yellow-200 stroke-yellow-600 dark:stroke-yellow-200" : "fill-transparent"}
             />
@@ -341,7 +341,7 @@ function TaskItem({ defaultTask, taskId }: TaskItemProps) {
       )}
       {isEditing && (
         <>
-          <Button variant="ghost-dim" size="icon-sm" onClick={() => doFlagTask(!(task.flagged ?? false))}>
+          <Button className="flag-button" variant="ghost-dim" size="icon-sm" onClick={() => doFlagTask(!(task.flagged ?? false))}>
             <FlagIcon
               className={task.flagged ? "fill-yellow-600 dark:fill-yellow-200 stroke-yellow-600 dark:stroke-yellow-200" : "fill-transparent"}
             />
