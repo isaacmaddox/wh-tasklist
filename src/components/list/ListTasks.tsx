@@ -139,7 +139,7 @@ function TaskItem({ defaultTask, taskId }: TaskItemProps) {
   const [updatedTaskName, setUpdatedTaskName] = useState<string>(task.name);
   const [updatedTaskDate, setUpdatedTaskDate] = useState<string>(formatDateForInput(new Date(task.due_date)));
   const taskNameBoxRef = useRef<HTMLTextAreaElement>(null);
-  const isOverdue = task.due_date < Date.now() - (Date.now() % 86400000);
+  const isOverdue = new Date(task.due_date + 86400000).getTime() < Date.now();
 
   useEffect(() => {
     setTask(defaultTask);

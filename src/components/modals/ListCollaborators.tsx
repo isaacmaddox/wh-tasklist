@@ -112,7 +112,7 @@ export function ListCollaboratorsModal({ children }: React.PropsWithChildren) {
           <>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="name">Add collaborator</FieldLabel>
+                <FieldLabel htmlFor="name">Collaborator email</FieldLabel>
                 {list.owner_id !== user.uid && (
                   <FieldDescription>You can add collaborators, but because you don't own this list, you cannot remove them.</FieldDescription>
                 )}
@@ -120,7 +120,7 @@ export function ListCollaboratorsModal({ children }: React.PropsWithChildren) {
                   <Input
                     id="name"
                     name="name"
-                    type="text"
+                    type="email"
                     value={newCollaborator}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
