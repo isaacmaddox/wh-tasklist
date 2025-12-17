@@ -16,3 +16,18 @@ export function transformEmailToDatabase(key: string) {
 export function transformEmailFromDatabase(key: string) {
   return key.replaceAll(",", ".");
 }
+
+export const DateFormatter = Intl.DateTimeFormat("en", {
+  month: "2-digit",
+  day: "2-digit",
+  year: "numeric",
+});
+
+export function formatDateForInput(date: Date) {
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+}
+
+export function getLocalDateFromInput(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).getTime();
+}

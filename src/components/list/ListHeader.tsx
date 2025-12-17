@@ -18,7 +18,7 @@ export function ListHeader() {
   if (!list) return;
 
   async function doDeleteList() {
-    if (confirm(`Are you sure you want to delete ${list!.name}?`)) {
+    if (confirm(`Are you sure you want to delete \"${list!.name}\"?`)) {
       const listName = list!.name;
 
       try {
@@ -72,11 +72,8 @@ export function ListHeader() {
         </li>
         {list.owner_id === user.uid && (
           <li>
-            <Button variant="destructive" className="group/delete-button not-hover:gap-0" onClick={doDeleteList}>
+            <Button variant="destructive" size="icon" onClick={doDeleteList}>
               <TrashIcon />
-              <span className="w-0 overflow-hidden transition-discrete transition-[width] [interpolate-size:allow-keywords] group-hover/delete-button:w-auto">
-                Delete list
-              </span>
             </Button>
           </li>
         )}
