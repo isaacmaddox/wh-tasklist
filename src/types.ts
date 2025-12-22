@@ -33,3 +33,10 @@ export interface Task {
   due_date: number;
   flagged?: boolean;
 }
+
+export interface UserSettings {
+  appearance?: {
+    width?: "wide" | "standard" | "full";
+    separateTasks?: boolean;
+  };
+}

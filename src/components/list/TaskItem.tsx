@@ -23,6 +23,7 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
   const ctx = useContext(ListPageContext);
   if (!ctx) throw new Error("Not in context");
   const { list, setList, doLiveUpdates } = ctx;
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [task, setTask] = useState<Task>(defaultTask);
   const [updatedTaskName, setUpdatedTaskName] = useState<string>(task.name);
