@@ -37,6 +37,6 @@ export interface Task {
 export interface UserSettings {
   appearance?: {
     width?: "wide" | "standard" | "full";
-    separateTasks?: boolean;
+    separateTasks?: "none" | "dashed" | "dotted" | "solid";
   };
 }

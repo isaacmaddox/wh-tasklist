@@ -1,5 +1,6 @@
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { db } from "@/lib/firebase";
+import { useSettings } from "@/lib/hooks/useSettings";
 import { cn, getLocalDateFromInput } from "@/lib/utils";
 import type { Task } from "@/types";
 import { push, ref } from "firebase/database";
@@ -15,7 +16,7 @@ import { Label } from "../ui/label";
 import { ListPageContext } from "./ListPageProvider";
 import { TaskItem } from "./TaskItem";
 
-const inputClassName = "dark:scheme-dark text-base! p-0 px-1 leading-9 -mx-1 bg-transparent! border-none focus:border-none rounded-sm";
+const inputClassName = "dark:scheme-dark text-base! p-0 px-1 leading-9 -mx-1 bg-transparent! shadow-none border-none focus:border-none rounded-sm";
 
 export function ListTasks() {
   const ctx = useContext(ListPageContext);
@@ -25,6 +26,7 @@ export function ListTasks() {
   const [endDate, setEndDate] = useState<string>("");
   const [newTaskName, setNewTaskName] = useState<string>("");
   const [newTaskDate, setNewTaskDate] = useState<string>("");
+  const { settings } = useSettings();
   if (!ctx) return;
   const { list, setList, doLiveUpdates, canUserModifyList } = ctx;
   if (!list) return;
@@ -88,7 +90,11 @@ export function ListTasks() {
   }
 
   return (
-    <ul className="grid grid-cols-[max-content_1fr_max-content_min-content_min-content_min-content] gap-3 gap-y-4 task-list">
+    <ul
+      className={cn(
+        "grid grid-cols-[max-content_1fr_max-content_min-content_min-content_min-content] gap-3 task-list",
+        settings.appearance?.separateTasks !== "none" ? "gap-y-2" : "gap-y-4"
+      )}>
       <li className="search-row grid grid-cols-2 gap-4 col-span-full items-center pt-4 border-t border-border">
         <Field className="max-md:col-span-full">
           <Label htmlFor="filter">Filter</Label>
@@ -144,12 +150,20 @@ export function ListTasks() {
           </Button>
         </div>
       </li>
-      <li className="tasks-header-row grid grid-cols-subgrid col-span-full items-center pb-4 border-b border-border">
+      <li
+        className={cn(
+          "tasks-header-row grid grid-cols-subgrid col-span-full items-center pb-4 border-b border-border",
+          settings.appearance?.separateTasks !== "none" && "pt-2"
+        )}>
         <p className="text-base leading-none font-semibold col-span-2">Task</p>
         <p className="text-base leading-none font-semibold">Due Date</p>
       </li>
       {canUserModifyList && (
-        <li className="grid grid-cols-subgrid col-span-full items-center add-task-row">
+        <li
+          className={cn(
+            "grid grid-cols-subgrid col-span-full items-center border-b border-transparent add-task-row",
+            settings.appearance?.separateTasks !== "none" && `py-2 border-border/50 border-${settings.appearance?.separateTasks}`
+          )}>
           <Checkbox disabled />
           <Input
             type="text"

@@ -69,7 +69,7 @@ export function YourLists() {
           </EmptyContent>
         </Empty>
       )}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))]">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))] gap-2">
         {lists.map((list) => (
           <ListCard list={list} key={list.id} />
         ))}

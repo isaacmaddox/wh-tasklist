@@ -33,10 +33,13 @@ export function SettingsProvider({ children }: React.PropsWithChildren) {
 
   function updateSettings(updates: UserSettings) {
     setSettings((oldSettings) => {
-      return {
-        ...oldSettings,
-        ...updates,
-      };
+      const current = { ...oldSettings };
+
+      for (const [key, value] of Object.entries(updates)) {
+        current[key as keyof typeof current] = { ...current[key as keyof typeof current], ...value };
+      }
+
+      return current;
     });
   }
 

@@ -1,4 +1,5 @@
 import { db } from "@/lib/firebase";
+import { useSettings } from "@/lib/hooks/useSettings";
 import { cn, DateFormatter, formatDateForInput, getLocalDateFromInput, isFirebasePermissionError } from "@/lib/utils";
 import type { Task } from "@/types";
 import { ref, set, update } from "firebase/database";
@@ -28,6 +29,7 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
   const [task, setTask] = useState<Task>(defaultTask);
   const [updatedTaskName, setUpdatedTaskName] = useState<string>(task.name);
   const [updatedTaskDate, setUpdatedTaskDate] = useState<string>(formatDateForInput(new Date(task.due_date)));
+  const { settings } = useSettings();
   const taskNameBoxRef = useRef<HTMLTextAreaElement>(null);
   const isOverdue = new Date(task.due_date + 86400000).getTime() < Date.now();
 
@@ -167,7 +169,8 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
     <li
       key={taskId}
       className={cn(
-        "group/task-item grid relative grid-cols-subgrid col-span-full items-center starting:opacity-0 transition-opacity",
+        "group/task-item grid relative grid-cols-subgrid col-span-full items-center border-b border-transparent starting:opacity-0 transition-opacity",
+        settings.appearance?.separateTasks !== "none" && `pb-2 border-border/50 border-${settings.appearance?.separateTasks}`,
         "after:absolute after:transition-transform after:origin-left after:inset-x-0 after:col-start-2 after:col-span-2 after:h-full after:inset-y-0 after:my-auto after:pointer-events-none",
         !task.completed && "after:scale-x-0"
       )}>
@@ -179,7 +182,7 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
             className={cn("block min-h-9 leading-9", isOverdue && "text-destructive", task.completed && "text-muted-foreground")}>
             {task.name}
           </label>
-          <label htmlFor={`task-${taskId}`} className={cn(isOverdue && "text-destructive", task.completed && "text-muted-foreground")}>
+          <label htmlFor={`task-${taskId}`} className={cn(isOverdue && "text-destructive", task.completed && "line-through text-muted-foreground")}>
             {DateFormatter.format(new Date(task.due_date))}
           </label>
         </>
