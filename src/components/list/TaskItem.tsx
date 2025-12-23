@@ -170,7 +170,9 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
       key={taskId}
       className={cn(
         "group/task-item grid relative grid-cols-subgrid col-span-full items-center border-b border-transparent starting:opacity-0 transition-opacity",
-        settings.appearance?.separateTasks !== "none" && `pb-2 border-border/50 border-${settings.appearance?.separateTasks}`,
+        settings.appearance?.separateTasks &&
+          settings.appearance?.separateTasks !== "none" &&
+          `pb-2 border-border/50 border-${settings.appearance?.separateTasks}`,
         "after:absolute after:transition-transform after:origin-left after:inset-x-0 after:col-start-2 after:col-span-2 after:h-full after:inset-y-0 after:my-auto after:pointer-events-none",
         !task.completed && "after:scale-x-0"
       )}>

@@ -93,7 +93,7 @@ export function ListTasks() {
     <ul
       className={cn(
         "grid grid-cols-[max-content_1fr_max-content_min-content_min-content_min-content] gap-3 task-list",
-        settings.appearance?.separateTasks !== "none" ? "gap-y-2" : "gap-y-4"
+        settings.appearance?.separateTasks && settings.appearance?.separateTasks !== "none" ? "gap-y-2" : "gap-y-4"
       )}>
       <li className="search-row grid grid-cols-2 gap-4 col-span-full items-center pt-4 border-t border-border">
         <Field className="max-md:col-span-full">
@@ -153,7 +153,7 @@ export function ListTasks() {
       <li
         className={cn(
           "tasks-header-row grid grid-cols-subgrid col-span-full items-center pb-4 border-b border-border",
-          settings.appearance?.separateTasks !== "none" && "pt-2"
+          settings.appearance?.separateTasks && settings.appearance?.separateTasks !== "none" && "pt-2"
         )}>
         <p className="text-base leading-none font-semibold col-span-2">Task</p>
         <p className="text-base leading-none font-semibold">Due Date</p>
@@ -162,7 +162,9 @@ export function ListTasks() {
         <li
           className={cn(
             "grid grid-cols-subgrid col-span-full items-center border-b border-transparent add-task-row",
-            settings.appearance?.separateTasks !== "none" && `py-2 border-border/50 border-${settings.appearance?.separateTasks}`
+            settings.appearance?.separateTasks &&
+              settings.appearance?.separateTasks !== "none" &&
+              `py-2 border-border/50 border-${settings.appearance?.separateTasks}`
           )}>
           <Checkbox disabled />
           <Input
