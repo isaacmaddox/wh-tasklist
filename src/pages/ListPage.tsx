@@ -40,7 +40,7 @@ export function List() {
             setList(snapshot.val());
          });
       }
-   }, [listRef, doLiveUpdates]);
+   }, [listRef, doLiveUpdates, list, setList]);
 
    if (list === null) {
       document.title = "List not found";
