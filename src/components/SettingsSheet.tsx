@@ -8,74 +8,58 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 
 export function SettingsSheet() {
-  const { settings, updateSettings } = useSettings();
-  const { theme, setTheme } = useTheme();
+   const { settings, updateSettings } = useSettings();
+   const { theme, setTheme } = useTheme();
 
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline">
-          <SettingsIcon />
-          Settings
-        </Button>
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Settings</SheetTitle>
-          <SheetDescription>Alter the look and feel of TaskList</SheetDescription>
-        </SheetHeader>
-        <div className="px-4 grid gap-4">
-          <Field>
-            <FieldLabel htmlFor="appearance-width">Width</FieldLabel>
-            <Select
-              defaultValue={settings.appearance?.width || "standard"}
-              onValueChange={(val) => updateSettings({ appearance: { width: val as any } })}>
-              <SelectTrigger id="appearance-width">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard">Standard (default)</SelectItem>
-                <SelectItem value="wide">Wide</SelectItem>
-                <SelectItem value="full">Full</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="task-separator">Task Separator</FieldLabel>
-            <Select
-              defaultValue={settings.appearance?.separateTasks || "none"}
-              onValueChange={(val) => updateSettings({ appearance: { separateTasks: val as any } })}>
-              <SelectTrigger id="task-separator">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None (default)</SelectItem>
-                <SelectItem value="dashed">Dashed</SelectItem>
-                <SelectItem value="dotted">Dotted</SelectItem>
-                <SelectItem value="solid">Solid</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="theme-select">Theme</FieldLabel>
-            <Select defaultValue={theme || "dark"} onValueChange={(val) => setTheme(val as any)}>
-              <SelectTrigger id="theme-select">
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
-        <SheetFooter>
-          <Button variant="secondary" onClick={() => signOutUser()}>
-            <LogOutIcon />
-            Log out
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  );
+   return (
+      <Sheet>
+         <SheetTrigger asChild>
+            <Button variant="outline">
+               <SettingsIcon />
+               Settings
+            </Button>
+         </SheetTrigger>
+         <SheetContent>
+            <SheetHeader>
+               <SheetTitle>Settings</SheetTitle>
+               <SheetDescription>Alter the look and feel of TaskList</SheetDescription>
+            </SheetHeader>
+            <div className="px-4 grid gap-4">
+               <Field>
+                  <FieldLabel htmlFor="appearance-width">Width</FieldLabel>
+                  <Select
+                     defaultValue={settings.appearance?.width || "standard"}
+                     onValueChange={(val) => updateSettings({ appearance: { width: val as any } })}>
+                     <SelectTrigger id="appearance-width">
+                        <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                        <SelectItem value="standard">Standard (default)</SelectItem>
+                        <SelectItem value="wide">Wide</SelectItem>
+                        <SelectItem value="full">Full</SelectItem>
+                     </SelectContent>
+                  </Select>
+               </Field>
+               <Field>
+                  <FieldLabel htmlFor="theme-select">Theme</FieldLabel>
+                  <Select defaultValue={theme || "dark"} onValueChange={(val) => setTheme(val as any)}>
+                     <SelectTrigger id="theme-select">
+                        <SelectValue placeholder="Select theme" />
+                     </SelectTrigger>
+                     <SelectContent>
+                        <SelectItem value="light">Light</SelectItem>
+                        <SelectItem value="dark">Dark</SelectItem>
+                     </SelectContent>
+                  </Select>
+               </Field>
+            </div>
+            <SheetFooter>
+               <Button variant="secondary" onClick={() => signOutUser()}>
+                  <LogOutIcon />
+                  Log out
+               </Button>
+            </SheetFooter>
+         </SheetContent>
+      </Sheet>
+   );
 }
