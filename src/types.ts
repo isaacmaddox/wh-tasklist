@@ -35,6 +35,9 @@ export interface Task {
 }
 
 export interface UserSettings {
+   function?: {
+      soonDays?: number;
+   };
    appearance?: {
       width?: "wide" | "standard" | "full";
    };

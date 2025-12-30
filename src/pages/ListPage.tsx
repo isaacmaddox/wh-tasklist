@@ -35,12 +35,12 @@ export function List() {
    const { list, setList, listRef, doLiveUpdates, isAccessible, user, setIsAccessible } = ctx;
 
    useEffect(() => {
-      if (list !== null && doLiveUpdates) {
+      if (doLiveUpdates) {
          return onValue(listRef, (snapshot) => {
             setList(snapshot.val());
          });
       }
-   }, [listRef, doLiveUpdates, list, setList]);
+   }, [listRef, doLiveUpdates, setList]);
 
    if (list === null) {
       document.title = "List not found";

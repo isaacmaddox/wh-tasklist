@@ -1,11 +1,20 @@
+import {
+   DropdownMenu,
+   DropdownMenuCheckboxItem,
+   DropdownMenuContent,
+   DropdownMenuGroup,
+   DropdownMenuLabel,
+   DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { db } from "@/lib/firebase";
-import { cn, getLocalDateFromInput } from "@/lib/utils";
+import { useSettings } from "@/lib/hooks/useSettings";
+import { cn, formatDateForInput, getLocalDateFromInput, isTaskOverdue } from "@/lib/utils";
 import type { Task } from "@/types";
 import { push, ref } from "firebase/database";
 import _ from "lodash";
-import { PlusIcon, XIcon } from "lucide-react";
-import { useContext, useRef, useState } from "react";
+import { FlagIcon, PlusIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import { useContext, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -18,28 +27,65 @@ import { TaskItem } from "./TaskItem";
 const inputClassName =
    "dark:scheme-dark text-base! p-0 px-1 leading-9 -mx-1 bg-transparent! shadow-none border-none focus:border-none rounded-sm";
 
+type Filters = {
+   query?: string;
+   startDate?: number;
+   endDate?: number;
+   showFlagged?: boolean;
+   showComplete?: boolean;
+   showIncomplete?: boolean;
+   showOverdue?: boolean;
+   showDueSoon?: boolean;
+};
+
 export function ListTasks() {
    const ctx = useContext(ListPageContext);
    const newTaskInputRef = useRef<HTMLInputElement>(null);
-   const [filterQuery, setFilterQuery] = useState<string>("");
-   const [startDate, setStartDate] = useState<string>("");
-   const [endDate, setEndDate] = useState<string>("");
+   const { settings } = useSettings();
    const [newTaskName, setNewTaskName] = useState<string>("");
    const [newTaskDate, setNewTaskDate] = useState<string>("");
-   if (!ctx) return;
+   const [newTaskFlagged, setNewTaskFlagged] = useState<boolean>(false);
+   if (!ctx) throw new Error("Not in context");
    const { list, setList, doLiveUpdates, canUserModifyList } = ctx;
-   if (!list) return;
-   const filterStartDate = startDate !== "" ? getLocalDateFromInput(startDate) : undefined;
-   const filterEndDate = endDate !== "" ? getLocalDateFromInput(endDate) : undefined;
+   if (!list) throw new Error("No list found");
+   const [filters, dispatchFilters] = useReducer<Filters, [Filters | null]>((previous, action) => {
+      if (action === null) {
+         return {};
+      }
+
+      return {
+         ...previous,
+         ...action,
+      };
+   }, {});
 
    const tasks = _.orderBy(
       _.filter(Object.entries(list.tasks || {}), ([, task]) => {
-         const wellFormedQuery = filterQuery.trim().toLowerCase();
-
+         const wellFormedQuery = filters.query?.trim().toLowerCase() || "";
          if (wellFormedQuery !== "" && !task.name.toLowerCase().trim().includes(wellFormedQuery)) return false;
 
-         if (filterStartDate !== undefined && task.due_date < filterStartDate) return false;
-         if (filterEndDate !== undefined && task.due_date > filterEndDate) return false;
+         if (filters.startDate !== undefined && task.due_date < filters.startDate) return false;
+         if (filters.endDate !== undefined && task.due_date > filters.endDate) return false;
+
+         const areAnyFiltersChecked = Object.values(filters).some((v) => v === true);
+
+         if (areAnyFiltersChecked) {
+            if (filters.showIncomplete && task.completed) return false;
+            if (filters.showComplete && !task.completed) return false;
+
+            if (filters.showFlagged && !task.flagged) return false;
+
+            if (filters.showOverdue && !isTaskOverdue(task)) return false;
+            if (
+               filters.showDueSoon &&
+               (isTaskOverdue(task) ||
+                  !isTaskOverdue({
+                     ...task,
+                     due_date: task.due_date - 86400000 * (settings.function?.soonDays || 3),
+                  }))
+            )
+               return false;
+         }
 
          return true;
       }),
@@ -62,6 +108,7 @@ export function ListTasks() {
          name,
          due_date: getLocalDateFromInput(newTaskDate),
          completed: false,
+         flagged: newTaskFlagged,
          list_id: list!.id,
       };
 
@@ -81,6 +128,7 @@ export function ListTasks() {
 
          setNewTaskName("");
          setNewTaskDate("");
+         setNewTaskFlagged(false);
 
          newTaskInputRef?.current?.focus();
       } catch {
@@ -98,17 +146,17 @@ export function ListTasks() {
                      id="filter"
                      type="text"
                      placeholder="Search for a task..."
-                     value={filterQuery}
-                     onChange={(e) => setFilterQuery(e.currentTarget.value)}
+                     value={filters.query}
+                     onChange={(e) => dispatchFilters({ query: e.currentTarget.value })}
                   />
                   <InputGroupAddon align="inline-end">
-                     <InputGroupButton size="icon-xs" onClick={() => setFilterQuery("")}>
+                     <InputGroupButton size="icon-xs" onClick={() => dispatchFilters({ query: undefined })}>
                         <XIcon />
                      </InputGroupButton>
                   </InputGroupAddon>
                </InputGroup>
             </Field>
-            <div className="grid grid-cols-[1fr_1fr_min-content] items-end max-md:col-span-full">
+            <div className="grid grid-cols-2 items-end max-md:col-span-full">
                <Field>
                   <Label htmlFor="startDate">From</Label>
                   <InputGroup className="col-span-2 rounded-tr-none rounded-br-none">
@@ -116,8 +164,8 @@ export function ListTasks() {
                         className="dark:scheme-dark"
                         id="startDate"
                         type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.currentTarget.value)}
+                        value={filters.startDate ? formatDateForInput(new Date(filters.startDate)) : ""}
+                        onChange={(e) => dispatchFilters({ startDate: getLocalDateFromInput(e.currentTarget.value) })}
                      />
                   </InputGroup>
                </Field>
@@ -128,18 +176,66 @@ export function ListTasks() {
                         className="dark:scheme-dark"
                         id="endDate"
                         type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.currentTarget.value)}
+                        value={filters.endDate ? formatDateForInput(new Date(filters.endDate)) : ""}
+                        onChange={(e) => dispatchFilters({ endDate: getLocalDateFromInput(e.currentTarget.value) })}
                      />
                   </InputGroup>
+               </Field>
+            </div>
+            <div className="col-span-2 grid grid-cols-[1fr_min-content] items-center">
+               <Field className="w-fit justify-self-end">
+                  <DropdownMenu>
+                     <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="w-fit">
+                           <SlidersHorizontalIcon />
+                           Advanced
+                        </Button>
+                     </DropdownMenuTrigger>
+                     <DropdownMenuContent>
+                        <DropdownMenuGroup>
+                           <DropdownMenuLabel>Status</DropdownMenuLabel>
+                           <DropdownMenuCheckboxItem
+                              checked={filters.showIncomplete}
+                              onCheckedChange={() => dispatchFilters({ showIncomplete: !filters.showIncomplete })}
+                              onSelect={(e) => e.preventDefault()}>
+                              Incomplete
+                           </DropdownMenuCheckboxItem>
+                           <DropdownMenuCheckboxItem
+                              checked={filters.showComplete}
+                              onCheckedChange={() => dispatchFilters({ showComplete: !filters.showComplete })}
+                              onSelect={(e) => e.preventDefault()}>
+                              Completed
+                           </DropdownMenuCheckboxItem>
+                           <DropdownMenuCheckboxItem
+                              checked={filters.showFlagged}
+                              onCheckedChange={() => dispatchFilters({ showFlagged: !filters.showFlagged })}
+                              onSelect={(e) => e.preventDefault()}>
+                              Flagged
+                           </DropdownMenuCheckboxItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuGroup>
+                           <DropdownMenuLabel>Due Date</DropdownMenuLabel>
+                           <DropdownMenuCheckboxItem
+                              checked={filters.showOverdue}
+                              onCheckedChange={() => dispatchFilters({ showOverdue: !filters.showOverdue })}
+                              onSelect={(e) => e.preventDefault()}>
+                              Overdue
+                           </DropdownMenuCheckboxItem>
+                           <DropdownMenuCheckboxItem
+                              checked={filters.showDueSoon}
+                              onCheckedChange={() => dispatchFilters({ showDueSoon: !filters.showDueSoon })}
+                              onSelect={(e) => e.preventDefault()}>
+                              Due Soon
+                           </DropdownMenuCheckboxItem>
+                        </DropdownMenuGroup>
+                     </DropdownMenuContent>
+                  </DropdownMenu>
                </Field>
                <Button
                   variant="ghost-dim"
                   className="ml-2"
                   onClick={() => {
-                     setFilterQuery("");
-                     setStartDate("");
-                     setEndDate("");
+                     dispatchFilters(null);
                   }}>
                   Clear all
                </Button>
@@ -181,7 +277,16 @@ export function ListTasks() {
                      }
                   }}
                />
-               <Button size="sm" className="w-full col-span-3" onClick={doAddTask}>
+               <Button size="sm" variant="ghost" onClick={() => setNewTaskFlagged(!newTaskFlagged)}>
+                  <FlagIcon
+                     className={
+                        newTaskFlagged
+                           ? "fill-yellow-600 dark:fill-yellow-200 stroke-yellow-600 dark:stroke-yellow-200"
+                           : "fill-transparent"
+                     }
+                  />
+               </Button>
+               <Button size="sm" className="w-full col-span-2" onClick={doAddTask}>
                   <PlusIcon />
                   Add
                </Button>

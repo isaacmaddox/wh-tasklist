@@ -1,9 +1,10 @@
+import { Input } from "@/components/ui/input";
 import { signOutUser } from "@/lib/auth.firebase";
 import { useSettings } from "@/lib/hooks/useSettings";
 import { LogOutIcon, SettingsIcon } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "./ui/button";
-import { Field, FieldLabel } from "./ui/field";
+import { Field, FieldDescription, FieldLabel } from "./ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 
@@ -40,6 +41,21 @@ export function SettingsSheet() {
                      </SelectContent>
                   </Select>
                </Field>
+               <hr />
+               <Field>
+                  <FieldLabel htmlFor="soon-days">"Soon" days</FieldLabel>
+                  <FieldDescription>
+                     Specify how many days in the future the "Due Soon" filter should match
+                  </FieldDescription>
+                  <Input
+                     type="number"
+                     defaultValue={settings.function?.soonDays || 3}
+                     onChange={(e) => {
+                        updateSettings({ function: { soonDays: Number(e.currentTarget.value) } });
+                     }}
+                  />
+               </Field>
+               <hr />
                <Field>
                   <FieldLabel htmlFor="theme-select">Theme</FieldLabel>
                   <Select defaultValue={theme || "dark"} onValueChange={(val) => setTheme(val as any)}>

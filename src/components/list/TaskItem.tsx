@@ -1,5 +1,12 @@
 import { db } from "@/lib/firebase";
-import { cn, DateFormatter, formatDateForInput, getLocalDateFromInput, isFirebasePermissionError } from "@/lib/utils";
+import {
+   cn,
+   DateFormatter,
+   formatDateForInput,
+   getLocalDateFromInput,
+   isFirebasePermissionError,
+   isTaskOverdue,
+} from "@/lib/utils";
 import type { Task } from "@/types";
 import { ref, set, update } from "firebase/database";
 import { EditIcon, FlagIcon, SaveIcon, TrashIcon, XIcon } from "lucide-react";
@@ -30,7 +37,7 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
    const [updatedTaskName, setUpdatedTaskName] = useState<string>(task.name);
    const [updatedTaskDate, setUpdatedTaskDate] = useState<string>(formatDateForInput(new Date(task.due_date)));
    const taskNameBoxRef = useRef<HTMLTextAreaElement>(null);
-   const isOverdue = new Date(task.due_date + 86400000).getTime() < Date.now();
+   const isOverdue = isTaskOverdue(task);
 
    useEffect(() => {
       setTask(defaultTask);
