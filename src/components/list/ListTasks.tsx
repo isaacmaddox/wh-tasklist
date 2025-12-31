@@ -146,7 +146,7 @@ export function ListTasks() {
                      id="filter"
                      type="text"
                      placeholder="Search for a task..."
-                     value={filters.query}
+                     value={filters.query ?? ""}
                      onChange={(e) => dispatchFilters({ query: e.currentTarget.value })}
                   />
                   <InputGroupAddon align="inline-end">
