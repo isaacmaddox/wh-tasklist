@@ -39,7 +39,7 @@ export function SharedLists() {
       </h2>
       {isListsLoading && <p className="text-muted-foreground animate-pulse">Loading your lists...</p>}
       {!isListsLoading && lists.length === 0 && <p className="text-muted-foreground">No lists have been shared with you yet.</p>}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))]">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,350px),1fr))]  gap-2">
         {lists.map((list) => (
           <ListCard list={list} key={list.id} />
         ))}
