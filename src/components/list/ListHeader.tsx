@@ -59,6 +59,8 @@ export function ListHeader() {
          {} as Record<string, null>,
       );
 
+      console.log(paths);
+
       if (
          !confirm(
             `Are you sure you want to delete ALL completed tasks? ${Object.keys(paths).length} tasks will be affected`,
@@ -85,6 +87,8 @@ export function ListHeader() {
                };
             });
          }
+
+         toast.success("Delete completed tasks");
       } catch (e) {
          console.log(e);
 

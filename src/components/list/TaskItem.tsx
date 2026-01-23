@@ -64,6 +64,23 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
          await update(taskRef, {
             completed,
          });
+
+         if (!doLiveUpdates) {
+            setList((l) => {
+               if (!l) return l;
+
+               return {
+                  ...l,
+                  tasks: {
+                     ...l.tasks,
+                     [taskId]: {
+                        ...task,
+                        completed: true,
+                     },
+                  },
+               };
+            });
+         }
       } catch (e) {
          setTask(oldTask);
 
@@ -177,7 +194,7 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
          className={cn(
             "group/task-item grid relative grid-cols-subgrid col-span-full items-center starting:opacity-0 transition-opacity",
             "after:absolute after:transition-transform after:origin-left after:inset-x-0 after:col-start-2 after:col-span-2 after:h-full after:inset-y-0 after:my-auto after:pointer-events-none",
-            !task.completed && "after:scale-x-0"
+            !task.completed && "after:scale-x-0",
          )}>
          <Checkbox
             id={`task-${taskId}`}
@@ -192,7 +209,7 @@ export function TaskItem({ defaultTask, taskId }: TaskItemProps) {
                   className={cn(
                      "block min-h-9 leading-9",
                      isOverdue && "text-destructive",
-                     task.completed && "text-muted-foreground"
+                     task.completed && "text-muted-foreground",
                   )}>
                   {task.name}
                </label>
