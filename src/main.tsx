@@ -1,10 +1,23 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import * as Sentry from "@sentry/react";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+import "./instrument";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+createRoot(
+   document.getElementById("root")!,
+   import.meta.env.VITE_ENV !== "development"
+      ? {
+           onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
+              console.warn("Uncaught error", error, errorInfo.componentStack);
+           }),
+           onCaughtError: Sentry.reactErrorHandler(),
+           onRecoverableError: Sentry.reactErrorHandler(),
+        }
+      : undefined,
+).render(
+   <StrictMode>
+      <App />
+   </StrictMode>,
+);
