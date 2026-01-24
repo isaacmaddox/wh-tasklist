@@ -1,4 +1,4 @@
-import { SettingsContext } from "@/components/providers/settings-context";
+import { SettingsContext } from "@/components/providers/settings/context";
 import { auth } from "@/lib/firebase";
 import type { UserSettings } from "@/lib/types";
 import type { User } from "firebase/auth";

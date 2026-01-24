@@ -1,4 +1,4 @@
-import type { Theme } from "@/components/providers/theme-context";
+import type { Theme } from "@/components/providers/theme/context";
 import { Input } from "@/components/ui/input";
 import { auth } from "@/lib/firebase";
 import { useSettings } from "@/lib/hooks/use-settings";

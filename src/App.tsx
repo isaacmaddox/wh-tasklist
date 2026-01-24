@@ -1,8 +1,9 @@
-import { SettingsProvider } from "@/components/providers/settings-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
+import { SettingsProvider } from "@/components/providers/settings/provider";
+import { ThemeProvider } from "@/components/providers/theme/provider";
 import { AuthPage } from "@/layouts/auth-page";
 import { RequireAuth } from "@/layouts/require-auth";
 import { HomePage } from "@/pages/home";
+import { ListPage } from "@/pages/list";
 import { LoginPage } from "@/pages/login";
 import { RegisterPage } from "@/pages/register";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -17,6 +18,7 @@ function App() {
                   <Routes>
                      <Route path="/" element={<RequireAuth />}>
                         <Route index element={<HomePage />} />
+                        <Route path="/l/:listId" element={<ListPage />} />
                      </Route>
                      <Route path="/" element={<AuthPage />}>
                         <Route path="/login" element={<LoginPage />} />

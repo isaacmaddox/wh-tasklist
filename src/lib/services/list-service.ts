@@ -74,6 +74,15 @@ export class ListService {
       }
    }
 
+   public async getById(listId?: string): Promise<List | null> {
+      if (!listId) return null;
+      const listRef = ref(db, `lists/${listId}`);
+
+      return (await get(listRef)).val();
+   }
+
+   // TODO: Edit list
+
    private handleError(error: unknown, options?: HandleErrorOptions): ServiceErrorType<unknown> {
       if (import.meta.env.VITE_ENV !== "development")
          Sentry.captureMessage(options?.message || `An error occurred`, {
