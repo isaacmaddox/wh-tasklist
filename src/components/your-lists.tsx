@@ -1,6 +1,9 @@
 import { ListCards } from "@/components/list-cards";
+import { CreateListModal } from "@/components/modals/create-list";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/firebase";
 import { ListService } from "@/lib/services/list-service";
+import { PlusIcon } from "lucide-react";
 import { Suspense } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 
@@ -17,6 +20,14 @@ export function YourLists() {
             <h2 id="my-lists-title" className="text-xl font-semibold leading-snug">
                Your lists
             </h2>
+            <CreateListModal
+               trigger={
+                  <Button size="sm">
+                     <PlusIcon />
+                     New list
+                  </Button>
+               }
+            />
          </header>
          <Suspense fallback={<p className="text-muted-foreground animate-pulse">Loading...</p>}>
             <ListCards promise={listsPromise} />

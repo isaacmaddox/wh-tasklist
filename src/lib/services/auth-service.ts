@@ -1,4 +1,5 @@
 import { auth } from "@/lib/firebase";
+import type { HandleErrorOptions, ServiceReturnType } from "@/lib/services";
 import * as Sentry from "@sentry/react";
 import { FirebaseError } from "firebase/app";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
@@ -14,7 +15,7 @@ export class AuthService {
       return this.instance;
    }
 
-   public async login({ email, password }: LoginRequest): Promise<AuthServiceReturnType<LoginRequest>> {
+   public async login({ email, password }: LoginArgs): Promise<ServiceReturnType<LoginArgs>> {
       const strippedEmail = email.trim();
       const strippedPassword = password.trim();
 
@@ -49,11 +50,7 @@ export class AuthService {
       }
    }
 
-   public async register({
-      email,
-      password,
-      confirmPassword,
-   }: SignupRequest): Promise<AuthServiceReturnType<SignupRequest>> {
+   public async register({ email, password, confirmPassword }: SignupArgs): Promise<ServiceReturnType<SignupArgs>> {
       const strippedEmail = email.trim();
 
       if (!strippedEmail || !password || !confirmPassword) {
@@ -88,9 +85,14 @@ export class AuthService {
       }
    }
 
-   private handleError(error: unknown, options?: HandleErrorOptions): AuthServiceReturnType<unknown> {
+   private handleError(error: unknown, options?: HandleErrorOptions): ServiceReturnType<unknown> {
       if (import.meta.env.VITE_ENV !== "development")
-         Sentry.captureMessage(options?.message || `An error occurred`, options?.severity || "error");
+         Sentry.captureMessage(options?.message || `An error occurred`, {
+            level: options?.severity || "error",
+            extra: {
+               error,
+            },
+         });
 
       if (error instanceof FirebaseError) {
          const code = error.code as string;
@@ -122,32 +124,13 @@ const authErrorMessages: Record<string, string> = {
    "auth/popup-closed-by-user": "The popup was closed before completing the sign-in",
 };
 
-interface HandleErrorOptions {
-   message?: string;
-   severity?: Sentry.SeverityLevel;
-}
-
-interface LoginRequest {
+interface LoginArgs {
    email: string;
    password: string;
 }
 
-interface SignupRequest {
+interface SignupArgs {
    email: string;
    password: string;
    confirmPassword: string;
 }
-
-type AuthServiceReturnType<T = Record<string, unknown>> =
-   | {
-        success: true;
-        errors?: never;
-     }
-   | {
-        success: false;
-        errors?: {
-           [Key in keyof T]?: string;
-        } & {
-           general?: string;
-        };
-     };

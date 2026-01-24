@@ -2,9 +2,6 @@ export interface List {
    id: string;
    owner_id: string;
    name: string;
-   password_protected: boolean;
-   hash: string;
-   salt: string;
    tasks?: Record<string, Task>;
    shares?: Record<string, boolean>;
 }
