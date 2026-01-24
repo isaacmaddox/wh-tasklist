@@ -90,7 +90,7 @@ export function ListTasks() {
          return true;
       }),
       [([, t]) => new Date(t.due_date)],
-      "asc"
+      "asc",
    );
 
    async function doAddTask() {
@@ -243,7 +243,7 @@ export function ListTasks() {
          </li>
          <li
             className={cn(
-               "tasks-header-row grid grid-cols-subgrid col-span-full items-center pb-4 border-b border-border"
+               "tasks-header-row grid grid-cols-subgrid col-span-full items-center pb-4 border-b border-border",
             )}>
             <p className="text-base leading-none font-semibold col-span-2">Task</p>
             <p className="text-base leading-none font-semibold">Due Date</p>
