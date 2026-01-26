@@ -3,7 +3,17 @@ import type { HandleErrorOptions, ServiceErrorType, ServiceReturnType } from "@/
 import type { List } from "@/lib/types";
 import { isFirebasePermissionError, transformEmailToDatabase } from "@/lib/utils";
 import * as Sentry from "@sentry/react";
-import { equalTo, get, onValue, orderByChild, query, ref, set } from "firebase/database";
+import {
+   equalTo,
+   get,
+   onValue,
+   orderByChild,
+   query,
+   ref,
+   set,
+   update,
+   type DatabaseReference,
+} from "firebase/database";
 
 export class ListService {
    private static instance: ListService | null = null;
@@ -81,7 +91,27 @@ export class ListService {
       return (await get(listRef)).val();
    }
 
-   // TODO: Edit list
+   public getReference(listId?: string): DatabaseReference {
+      return ref(db, `lists/${listId}`);
+   }
+
+   public async editList(listId: string, edits: Partial<List>): Promise<ServiceReturnType> {
+      if (Object.keys(edits).length === 0) return { success: false, errors: { general: "No edits provided" } };
+      if (
+         Object.values(edits)
+            .filter((v) => (typeof v === "string" ? v.trim() : v))
+            .filter(Boolean).length === 0
+      )
+         return { success: false, errors: { general: "Please provide valid edits" } };
+      const listRef = ref(db, `lists/${listId}`);
+
+      try {
+         await update(listRef, edits);
+         return { success: true };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
 
    private handleError(error: unknown, options?: HandleErrorOptions): ServiceErrorType<unknown> {
       if (import.meta.env.VITE_ENV !== "development")

@@ -13,7 +13,7 @@ export function ListHeader() {
    const [isEditing, setIsEditing] = useState<boolean>(false);
    if (!ctx) throw new Error("Not in context");
    if (!user) throw new Error("You must be logged in to do this");
-   const { list } = ctx;
+   const { list, updateList } = ctx;
 
    return (
       <header className="grid justify-items-start gap-4">
@@ -26,7 +26,11 @@ export function ListHeader() {
          <div className="w-full">
             {!isEditing && (
                <>
-                  <h1 className="text-3xl w-fit font-bold inline leading-snug align-middle">{list.name}</h1>
+                  <h1
+                     className="text-3xl w-fit font-bold inline leading-snug align-middle"
+                     onClick={() => setIsEditing(true)}>
+                     {list.name}
+                  </h1>
                   {list.owner_id === user.uid && (
                      <Button
                         className="ml-2 transition-colors inline-flex align-middle"
@@ -48,9 +52,13 @@ export function ListHeader() {
                   onKeyDown={(e) => {
                      if (e.key === "Enter") {
                         e.preventDefault();
+                        e.currentTarget.blur();
                      }
                   }}
-                  onBlur={() => setIsEditing(false)}
+                  onBlur={(e) => {
+                     setIsEditing(false);
+                     updateList({ name: e.currentTarget.value });
+                  }}
                />
             )}
          </div>
