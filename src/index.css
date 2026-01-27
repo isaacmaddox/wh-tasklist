@@ -148,3 +148,11 @@ body {
       background-repeat: repeat;
    }
 }
+
+@utility task-list-input {
+   @apply dark:scheme-dark text-base! p-0 px-1! leading-9 -mx-1 bg-transparent! shadow-none border-none focus:border-none rounded-sm;
+}
+
+@utility task-list-textarea {
+   @apply min-h-9! py-0! field-sizing-content! resize-none!;
+}

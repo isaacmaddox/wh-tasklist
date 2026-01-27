@@ -14,6 +14,8 @@ export interface Task {
    flagged?: boolean;
 }
 
+export type WithId<T> = T & { _id: string };
+
 export interface UserSettings {
    function?: {
       soonDays?: number;

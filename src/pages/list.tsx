@@ -1,5 +1,7 @@
 import { LoadingPage } from "@//components/loading-page";
+import { ListButtons } from "@/components/list-buttons";
 import { ListHeader } from "@/components/list-header";
+import { ListTasks } from "@/components/list-tasks";
 import { ListPageContext } from "@/components/providers/list/context";
 import { ListPageProvider } from "@/components/providers/list/provider";
 import { PageWrapper } from "@/layouts/page-wrapper";
@@ -28,7 +30,7 @@ export function List() {
    const { list } = ctx;
 
    useEffect(() => {
-      document.title = list.name;
+      document.title = `${list.name} | TaskList`;
    }, [list]);
 
    // Access controls
@@ -43,6 +45,8 @@ export function List() {
    return (
       <PageWrapper>
          <ListHeader />
+         <ListButtons />
+         <ListTasks />
       </PageWrapper>
    );
 }

@@ -55,6 +55,7 @@ export function SettingsSheet() {
                      Specify how many days in the future the "Due Soon" filter should match
                   </FieldDescription>
                   <Input
+                     id="soon-days"
                      type="number"
                      defaultValue={settings.function?.soonDays || 3}
                      onChange={(e) => {

@@ -3,17 +3,7 @@ import type { HandleErrorOptions, ServiceErrorType, ServiceReturnType } from "@/
 import type { List } from "@/lib/types";
 import { isFirebasePermissionError, transformEmailToDatabase } from "@/lib/utils";
 import * as Sentry from "@sentry/react";
-import {
-   equalTo,
-   get,
-   onValue,
-   orderByChild,
-   query,
-   ref,
-   set,
-   update,
-   type DatabaseReference,
-} from "firebase/database";
+import { equalTo, get, onValue, orderByChild, query, ref, set, update, type Unsubscribe } from "firebase/database";
 
 export class ListService {
    private static instance: ListService | null = null;
@@ -91,8 +81,10 @@ export class ListService {
       return (await get(listRef)).val();
    }
 
-   public getReference(listId?: string): DatabaseReference {
-      return ref(db, `lists/${listId}`);
+   public addChangeListener(listId: string, callback: (list: List) => unknown): Unsubscribe {
+      return onValue(ref(db, `/lists/${listId}`), (snapshot) => {
+         callback(snapshot.val());
+      });
    }
 
    public async editList(listId: string, edits: Partial<List>): Promise<ServiceReturnType> {

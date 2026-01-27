@@ -13,10 +13,10 @@ export function ListHeader() {
    const [isEditing, setIsEditing] = useState<boolean>(false);
    if (!ctx) throw new Error("Not in context");
    if (!user) throw new Error("You must be logged in to do this");
-   const { list, updateList } = ctx;
+   const { list, updateName } = ctx;
 
    return (
-      <header className="grid justify-items-start gap-4">
+      <header className="grid gap-4 justify-items-start">
          <Button variant="ghost" size="sm" className="not-hover:px-0 not-hover:text-muted-foreground" asChild>
             <Link to="/">
                <HomeIcon />
@@ -27,13 +27,13 @@ export function ListHeader() {
             {!isEditing && (
                <>
                   <h1
-                     className="text-3xl w-fit font-bold inline leading-snug align-middle"
+                     className="inline text-3xl font-bold leading-snug align-middle w-fit"
                      onClick={() => setIsEditing(true)}>
                      {list.name}
                   </h1>
                   {list.owner_id === user.uid && (
                      <Button
-                        className="ml-2 transition-colors inline-flex align-middle"
+                        className="inline-flex ml-2 align-middle transition-colors"
                         size="icon-sm"
                         variant="ghost"
                         onClick={() => setIsEditing(true)}>
@@ -57,7 +57,7 @@ export function ListHeader() {
                   }}
                   onBlur={(e) => {
                      setIsEditing(false);
-                     updateList({ name: e.currentTarget.value });
+                     updateName(e.currentTarget.value);
                   }}
                />
             )}
