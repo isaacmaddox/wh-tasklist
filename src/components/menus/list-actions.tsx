@@ -16,7 +16,12 @@ interface ListActionsProps {
 export function ListActions({ trigger }: ListActionsProps) {
    const ctx = useContext(ListPageContext);
    if (!ctx) throw new Error("Not in context");
-   const { doDeleteCompletedTasks } = ctx;
+   const {
+      list: { tasks },
+      doDeleteCompletedTasks,
+   } = ctx;
+
+   const numComplete = Object.values(tasks || {}).reduce((acc, task) => acc + (task.completed ? 1 : 0), 0);
 
    return (
       <DropdownMenu>
@@ -30,7 +35,14 @@ export function ListActions({ trigger }: ListActionsProps) {
                      Delete completed tasks
                   </DropdownMenuItem>
                }
-               text="Are you sure you want to delete all completed tasks?"
+               text={
+                  <>
+                     <p>Are you sure you want to delete all completed tasks?</p>
+                     <p className="mt-2 text-muted-foreground text-sm">
+                        {numComplete} task{numComplete === 1 ? "" : "s"} will be deleted
+                     </p>
+                  </>
+               }
                buttonVariant="destructive"
             />
          </DropdownMenuContent>

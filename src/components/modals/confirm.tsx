@@ -12,7 +12,7 @@ import { useState } from "react";
 
 interface ConfirmModalProps {
    trigger: React.ReactElement;
-   text: string;
+   text: string | React.ReactElement;
    buttonVariant?: React.ComponentProps<typeof Button>["variant"];
    onConfirm: () => unknown;
 }

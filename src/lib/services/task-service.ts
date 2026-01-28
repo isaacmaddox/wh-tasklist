@@ -3,7 +3,7 @@ import type { HandleErrorOptions, ServiceErrorType, ServiceReturnType } from "@/
 import type { List, Task, WithId } from "@/lib/types";
 import { getLocalDateFromInput, isFirebasePermissionError } from "@/lib/utils";
 import * as Sentry from "@sentry/react";
-import { push, ref, update } from "firebase/database";
+import { push, ref, set, update } from "firebase/database";
 
 export class TaskService {
    private static instance: TaskService | null = null;
@@ -21,6 +21,7 @@ export class TaskService {
       name,
       due,
       flagged,
+      completed,
    }: AddTaskArgs): Promise<ServiceReturnType<AddTaskArgs, { task: WithId<Task> }>> {
       const strippedName = name.trim();
 
@@ -40,7 +41,7 @@ export class TaskService {
          due_date: getLocalDateFromInput(due),
          flagged,
          list_id: listId,
-         completed: false,
+         completed: completed ?? false,
       };
 
       try {
@@ -56,6 +57,53 @@ export class TaskService {
 
       const updates: Partial<Task> = {
          completed,
+      };
+
+      try {
+         await update(taskRef, updates);
+         return { success: true };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
+
+   public async toggleTaskFlagged(listId: string, taskId: string, flagged: boolean): Promise<ServiceReturnType> {
+      const taskRef = ref(db, `lists/${listId}/tasks/${taskId}`);
+
+      const updates: Partial<Task> = {
+         flagged,
+      };
+
+      try {
+         await update(taskRef, updates);
+         return { success: true };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
+
+   public async editTask(
+      listId: string,
+      taskId: string,
+      edits: EditTaskArgs,
+   ): Promise<ServiceReturnType<EditTaskArgs>> {
+      const strippedName = edits.name.trim();
+
+      if (!strippedName || !edits.due) {
+         return {
+            success: false,
+            errors: {
+               ...(!strippedName && { name: "Task must have a name" }),
+               ...(!edits.due && { due: "Task must have a due date" }),
+            },
+         };
+      }
+
+      const taskRef = ref(db, `lists/${listId}/tasks/${taskId}`);
+
+      const updates: Partial<Task> = {
+         name: edits.name,
+         due_date: getLocalDateFromInput(edits.due),
       };
 
       try {
@@ -82,6 +130,17 @@ export class TaskService {
       try {
          await update(listTasksRef, completed);
          return { success: true, data: { tasks: remaining } };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
+
+   public async deleteTask(listId: string, taskId: string): Promise<ServiceReturnType> {
+      const taskRef = ref(db, `lists/${listId}/tasks/${taskId}`);
+
+      try {
+         await set(taskRef, null);
+         return { success: true };
       } catch (e) {
          return this.handleError(e);
       }
@@ -121,4 +180,10 @@ interface AddTaskArgs {
    name: string;
    due: string;
    flagged: boolean;
+   completed?: boolean;
+}
+
+interface EditTaskArgs {
+   name: string;
+   due: string;
 }

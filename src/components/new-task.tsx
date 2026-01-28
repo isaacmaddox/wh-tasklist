@@ -22,7 +22,7 @@ export function NewTask() {
    }
 
    return (
-      <li className="grid grid-cols-subgrid col-span-full items-center">
+      <li className="add-task-row grid grid-cols-subgrid col-span-full items-center">
          <Checkbox disabled />
          <Input
             type="text"

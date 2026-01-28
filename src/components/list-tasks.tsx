@@ -1,15 +1,18 @@
 import { ListFilters } from "@/components/list-filters";
+import { ConfirmModal } from "@/components/modals/confirm";
 import { NewTask } from "@/components/new-task";
 import { ListPageContext } from "@/components/providers/list/context";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { Task, WithId } from "@/lib/types";
-import { cn, DateFormatter, isTaskOverdue } from "@/lib/utils";
+import { cn, DateFormatter, formatDateForInput, isTaskOverdue } from "@/lib/utils";
 import _ from "lodash";
 import { EditIcon, FlagIcon, SaveIcon, TrashIcon, XIcon } from "lucide-react";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 function includesIgnoreCase(searchString: string, searchTerm: string) {
    return searchString.toLowerCase().replaceAll(/\s/g, "").includes(searchTerm.replaceAll(/\s/g, ""));
@@ -55,9 +58,27 @@ interface ListItemProps {
 function ListItem({ task }: ListItemProps) {
    const ctx = useContext(ListPageContext);
    if (!ctx) throw new Error("Not in context");
+   const [isProcessing, setIsProcessing] = useState<boolean>(false);
    const [isEditing, setIsEditing] = useState<boolean>(false);
+   const newNameInputRef = useRef<HTMLTextAreaElement>(null);
+   const newDateInputRef = useRef<HTMLInputElement>(null);
+   const { markTaskComplete, doEditTask, doToggleFlag, doDeleteTask } = ctx;
+
    const isOverdue = isTaskOverdue(task);
-   const { markTaskComplete } = ctx;
+
+   async function editTask() {
+      if (!newNameInputRef.current || !newDateInputRef.current) return toast.error("Something went wrong on our end");
+      await doEditTask(task._id, newNameInputRef.current.value, newDateInputRef.current.value);
+      setIsEditing(false);
+   }
+
+   useEffect(() => {
+      if (isEditing) {
+         requestAnimationFrame(() => {
+            newNameInputRef.current?.focus();
+         });
+      }
+   }, [isEditing]);
 
    return (
       <li
@@ -67,14 +88,21 @@ function ListItem({ task }: ListItemProps) {
             "after:absolute after:transition-transform after:origin-left after:inset-x-0 after:col-start-2 after:col-span-2 after:h-full after:inset-y-0 after:my-auto after:pointer-events-none",
             !task.completed && "after:scale-x-0 after:transition-none",
          )}>
-         <Checkbox
-            id={`task-${task._id}`}
-            checked={task.completed}
-            className="self-start mt-2.5"
-            onCheckedChange={(checked) => {
-               markTaskComplete(task._id, typeof checked === "boolean" && checked);
-            }}
-         />
+         {isProcessing ? (
+            <Spinner className="self-start mt-2.5" />
+         ) : (
+            <Checkbox
+               id={`task-${task._id}`}
+               checked={task.completed}
+               className="self-start mt-2.5"
+               disabled={isEditing}
+               onCheckedChange={async (checked) => {
+                  setIsProcessing(true);
+                  await markTaskComplete(task._id, typeof checked === "boolean" && checked);
+                  setIsProcessing(false);
+               }}
+            />
+         )}
          {!isEditing && (
             <>
                <label
@@ -91,7 +119,13 @@ function ListItem({ task }: ListItemProps) {
                   className={cn(isOverdue && "text-destructive", task.completed && "text-muted-foreground")}>
                   {DateFormatter.format(new Date(task.due_date))}
                </label>
-               <Button className="flag-button" variant="ghost-dim" size="icon-sm">
+               <Button
+                  className="flag-button"
+                  variant="ghost-dim"
+                  size="icon-sm"
+                  onClick={() => {
+                     doToggleFlag(task._id, !task.flagged);
+                  }}>
                   <FlagIcon
                      className={
                         task.flagged
@@ -105,16 +139,47 @@ function ListItem({ task }: ListItemProps) {
                   <EditIcon />
                   <span className="sr-only">Edit task</span>
                </Button>
-               <Button variant="destructive-ghost" size="icon-sm">
-                  <TrashIcon />
-                  <span className="sr-only">Delete task</span>
-               </Button>
+               <ConfirmModal
+                  onConfirm={() => doDeleteTask(task._id)}
+                  text={
+                     <>
+                        <p>Are you sure you want to delete this task?</p>
+                        <p className="mt-2 text-sm text-muted-foreground">{task.name}</p>
+                     </>
+                  }
+                  trigger={
+                     <Button variant="destructive-ghost" size="icon-sm">
+                        <TrashIcon />
+                        <span className="sr-only">Delete task</span>
+                     </Button>
+                  }
+                  buttonVariant="destructive"
+               />
             </>
          )}
          {isEditing && (
             <>
-               <Textarea className="task-list-input task-list-textarea" onFocus={(e) => e.currentTarget.select()} />
-               <Input type="date" className="task-list-input" />
+               <Textarea
+                  className="task-list-input task-list-textarea"
+                  onFocus={(e) => e.currentTarget.select()}
+                  defaultValue={task.name}
+                  ref={newNameInputRef}
+                  onKeyDown={(e) => {
+                     if (e.key === "Enter") {
+                        e.preventDefault();
+                        editTask();
+                     }
+                  }}
+               />
+               <Input
+                  type="date"
+                  className="task-list-input"
+                  defaultValue={formatDateForInput(new Date(task.due_date))}
+                  ref={newDateInputRef}
+                  onKeyDown={(e) => {
+                     if (e.key === "Enter") editTask();
+                  }}
+               />
                <Button className="flag-button" variant="ghost-dim" size="icon-sm">
                   <FlagIcon
                      className={
@@ -127,9 +192,11 @@ function ListItem({ task }: ListItemProps) {
                </Button>
                <Button variant="ghost-dim" size="icon-sm" onClick={() => setIsEditing(false)}>
                   <XIcon />
+                  <span className="sr-only">Cancel</span>
                </Button>
-               <Button size="icon-sm">
+               <Button size="icon-sm" onClick={editTask}>
                   <SaveIcon />
+                  <span className="sr-only">Save changes</span>
                </Button>
             </>
          )}

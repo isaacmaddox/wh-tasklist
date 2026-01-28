@@ -12,7 +12,7 @@ export function ListButtons() {
    const [user] = useAuthState(auth);
    const ctx = useContext(ListPageContext);
    if (!ctx) throw new Error("Not in context");
-   const { list, doLiveUpdates, dispatchDoLiveUpdates, refreshList } = ctx;
+   const { list, doDeleteList, doLiveUpdates, dispatchDoLiveUpdates, refreshList } = ctx;
 
    return (
       <ul className="flex items-center pt-1 gap-2 w-full pb-3 border-b">
@@ -58,7 +58,7 @@ export function ListButtons() {
          {list.owner_id === user?.uid && (
             <li>
                <ConfirmModal
-                  onConfirm={() => {}}
+                  onConfirm={doDeleteList}
                   trigger={
                      <Button variant="destructive" size="icon">
                         <TrashIcon />

@@ -1,6 +1,7 @@
 import { ListPageContext } from "@/components/providers/list/context";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import { XIcon } from "lucide-react";
 import { useContext } from "react";
 
 export function ListFilters() {
@@ -9,7 +10,7 @@ export function ListFilters() {
    const { filters, dispatchFilters } = ctx;
 
    return (
-      <li className="grid grid-cols-2 gap-4 col-span-full items-center">
+      <li className="search-row grid grid-cols-2 gap-4 col-span-full items-center">
          <Field className="max-md:col-span-full">
             <FieldLabel htmlFor="search">Filter</FieldLabel>
             <InputGroup>
@@ -17,9 +18,15 @@ export function ListFilters() {
                   id="filter"
                   type="text"
                   placeholder="Search..."
-                  value={filters?.search}
+                  value={filters.search}
                   onChange={(e) => dispatchFilters({ search: e.currentTarget.value })}
                />
+               <InputGroupAddon align="inline-end">
+                  <InputGroupButton size="icon-xs" variant="ghost" onClick={() => dispatchFilters({ search: "" })}>
+                     <XIcon />
+                     <span className="sr-only">Clear search</span>
+                  </InputGroupButton>
+               </InputGroupAddon>
             </InputGroup>
          </Field>
       </li>

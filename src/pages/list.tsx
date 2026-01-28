@@ -7,6 +7,7 @@ import { ListPageProvider } from "@/components/providers/list/provider";
 import { PageWrapper } from "@/layouts/page-wrapper";
 import { auth } from "@/lib/firebase";
 import { transformEmailToDatabase } from "@/lib/utils";
+import "@/print.css";
 import { Suspense, useContext, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Navigate, useParams } from "react-router-dom";

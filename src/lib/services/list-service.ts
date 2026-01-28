@@ -105,6 +105,17 @@ export class ListService {
       }
    }
 
+   public async deleteList(listId: string): Promise<ServiceReturnType> {
+      const listRef = ref(db, `lists/${listId}`);
+
+      try {
+         await set(listRef, null);
+         return { success: true };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
+
    private handleError(error: unknown, options?: HandleErrorOptions): ServiceErrorType<unknown> {
       if (import.meta.env.VITE_ENV !== "development")
          Sentry.captureMessage(options?.message || `An error occurred`, {

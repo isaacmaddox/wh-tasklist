@@ -4,34 +4,21 @@ import { Button } from "@/components/ui/button";
 import { ListService } from "@/lib/services/list-service";
 import { TaskService } from "@/lib/services/task-service";
 import type { List } from "@/lib/types";
+import { formatDateForInput, getLocalDateFromInput } from "@/lib/utils";
 import { useCallback, useEffect, useReducer, useState, type PropsWithChildren } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface ListPageProviderProps extends PropsWithChildren {
    listId?: string;
 }
 
-function liveUpdatesReducer(_: unknown, enable: boolean) {
-   localStorage.setItem("live-updates", enable ? "true" : "false");
-   return enable;
-}
-
-const initialLiveUpdatesPreference = (localStorage.getItem("live-updates") ?? "true") === "true";
-
-function filtersReducer(lastFilters: ListPageFilters, edits: Partial<ListPageFilters>) {
-   const newFilters = { ...lastFilters, ...edits };
-   localStorage.setItem("filters", JSON.stringify(newFilters));
-   return newFilters;
-}
-
-const initialFilters = JSON.parse(localStorage.getItem("filters") ?? "{}");
-
 export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    const [list, setList] = useState<List | null>(null);
    const [isLoading, setIsLoading] = useState<boolean>(true);
    const [doLiveUpdates, dispatchDoLiveUpdates] = useReducer(liveUpdatesReducer, initialLiveUpdatesPreference);
-   const [filters, dispatchFilters] = useReducer(filtersReducer, initialFilters);
+   const [filters, dispatchFilters] = useReducer(filtersReducerFactory(list?.id), {});
+   const navigate = useNavigate();
 
    const listService = ListService.getInstance();
    const taskService = TaskService.getInstance();
@@ -57,6 +44,19 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       }
    }
 
+   async function doDeleteList() {
+      if (!list) return;
+
+      const { errors } = await listService.deleteList(list.id);
+
+      if (errors) {
+         if (errors.general) toast.error(errors.general);
+         return;
+      }
+
+      navigate("/");
+   }
+
    async function doDeleteCompletedTasks() {
       if (!list) return;
 
@@ -78,7 +78,7 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       }
    }
 
-   async function doAddTask(name: string, due: string, flagged: boolean) {
+   async function doAddTask(name: string, due: string, flagged: boolean, completed?: boolean) {
       if (!list) return;
 
       const { success, errors, data } = await taskService.addTask({
@@ -86,6 +86,7 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
          name,
          due,
          flagged,
+         completed,
       });
 
       if (!success) {
@@ -103,6 +104,39 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
                tasks: {
                   ...oldList.tasks,
                   [data.task._id]: data?.task,
+               },
+            };
+         });
+      }
+   }
+
+   async function doEditTask(taskId: string, name: string, due: string) {
+      if (!list) return;
+
+      const { errors } = await taskService.editTask(list.id, taskId, {
+         name,
+         due,
+      });
+
+      if (errors) {
+         for (const error of Object.values(errors)) {
+            toast.error(error);
+            return;
+         }
+      }
+
+      if (!doLiveUpdates) {
+         setList((oldList) => {
+            if (!oldList || !oldList.tasks) return oldList;
+            return {
+               ...oldList,
+               tasks: {
+                  ...oldList.tasks,
+                  [taskId]: {
+                     ...oldList.tasks[taskId],
+                     name,
+                     due: getLocalDateFromInput(due),
+                  },
                },
             };
          });
@@ -136,6 +170,66 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       }
    }
 
+   async function doToggleFlag(taskId: string, flagged: boolean) {
+      if (!list) return;
+
+      const { errors } = await taskService.toggleTaskFlagged(list.id, taskId, flagged);
+
+      if (errors) {
+         if (errors.general) toast.error(errors.general);
+         return;
+      }
+
+      if (!doLiveUpdates) {
+         setList((oldList) => {
+            if (!oldList || !oldList.tasks) return oldList;
+            return {
+               ...oldList,
+               tasks: {
+                  ...oldList.tasks,
+                  [taskId]: {
+                     ...oldList.tasks[taskId],
+                     flagged,
+                  },
+               },
+            };
+         });
+      }
+   }
+
+   async function doDeleteTask(taskId: string) {
+      if (!list || !list.tasks) return;
+      const task = { ...list.tasks[taskId] };
+
+      const { errors } = await taskService.deleteTask(list.id, taskId);
+
+      if (errors) {
+         if (errors.general) toast.error(errors.general);
+         return;
+      }
+
+      toast.success("Successfully deleted task", {
+         action: {
+            label: "Undo",
+            onClick: () => {
+               doAddTask(task.name, formatDateForInput(new Date(task.due_date)), !!task.flagged, task.completed);
+            },
+         },
+      });
+
+      if (!doLiveUpdates) {
+         setList((oldList) => {
+            if (!oldList) return oldList;
+            const modifiedTasks = { ...oldList.tasks };
+            delete modifiedTasks[taskId];
+            return {
+               ...oldList,
+               tasks: modifiedTasks,
+            };
+         });
+      }
+   }
+
    const refreshList = useCallback(() => {
       listService
          .getById(listId)
@@ -146,20 +240,23 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    }, [listService, listId]);
 
    useEffect(() => {
-      const service = ListService.getInstance();
-
       if (!doLiveUpdates) {
-         service
+         listService
             .getById(listId)
             .then(setList)
             .finally(() => setIsLoading(false));
       } else if (listId) {
-         return service.addChangeListener(listId, (l) => {
+         return listService.addChangeListener(listId, (l) => {
             setList(l);
             setIsLoading(false);
          });
       }
-   }, [listId, doLiveUpdates]);
+   }, [listService, listId, doLiveUpdates]);
+
+   useEffect(() => {
+      const initialFilters = list ? JSON.parse(localStorage.getItem(`filters-${list.id}`) ?? "{}") : {};
+      dispatchFilters(initialFilters);
+   }, [list]);
 
    if (isLoading) {
       return <LoadingPage />;
@@ -182,10 +279,14 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
             list,
             refreshList,
             updateName,
+            doDeleteList,
             doLiveUpdates,
             dispatchDoLiveUpdates,
             doDeleteCompletedTasks,
             doAddTask,
+            doEditTask,
+            doToggleFlag,
+            doDeleteTask,
             filters,
             dispatchFilters,
             markTaskComplete,
@@ -193,4 +294,19 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
          {children}
       </ListPageContext.Provider>
    );
+}
+
+function liveUpdatesReducer(_: unknown, enable: boolean) {
+   localStorage.setItem("live-updates", enable ? "true" : "false");
+   return enable;
+}
+
+const initialLiveUpdatesPreference = (localStorage.getItem("live-updates") ?? "true") === "true";
+
+function filtersReducerFactory(listId?: string) {
+   return function filtersReducer(lastFilters: ListPageFilters, edits: Partial<ListPageFilters>) {
+      const newFilters = { ...lastFilters, ...edits };
+      if (listId) localStorage.setItem(`filters-${listId}`, JSON.stringify(newFilters));
+      return newFilters;
+   };
 }
