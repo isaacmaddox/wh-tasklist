@@ -206,7 +206,11 @@ function ListItem({ task }: ListItemProps) {
                      if (e.key === "Enter") editTask();
                   }}
                />
-               <Button className="flag-button" variant="ghost-dim" size="icon-sm">
+               <Button
+                  className="flag-button"
+                  variant="ghost-dim"
+                  size="icon-sm"
+                  onClick={() => doToggleFlag(task._id, !task.flagged)}>
                   <FlagIcon
                      className={
                         task.flagged

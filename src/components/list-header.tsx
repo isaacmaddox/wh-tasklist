@@ -57,7 +57,7 @@ export function ListHeader() {
                   }}
                   onBlur={(e) => {
                      setIsEditing(false);
-                     updateName(e.currentTarget.value);
+                     if (e.currentTarget.value.trim() !== list.name) updateName(e.currentTarget.value);
                   }}
                />
             )}

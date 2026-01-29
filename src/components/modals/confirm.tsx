@@ -27,7 +27,7 @@ export function ConfirmModal({ trigger, text, buttonVariant, onConfirm }: Confir
             <DialogHeader>
                <DialogTitle>Confirm</DialogTitle>
             </DialogHeader>
-            {typeof text === "string" ? <p>{text}</p> : text}
+            {typeof text === "string" ? <p>{text}</p> : <div>{text}</div>}
             <DialogFooter>
                <DialogClose asChild>
                   <Button variant="ghost">Cancel</Button>
