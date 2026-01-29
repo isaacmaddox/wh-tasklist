@@ -304,8 +304,8 @@ function liveUpdatesReducer(_: unknown, enable: boolean) {
 const initialLiveUpdatesPreference = (localStorage.getItem("live-updates") ?? "true") === "true";
 
 function filtersReducerFactory(listId?: string) {
-   return function filtersReducer(lastFilters: ListPageFilters, edits: Partial<ListPageFilters>) {
-      const newFilters = { ...lastFilters, ...edits };
+   return function filtersReducer(lastFilters: ListPageFilters, edits: Partial<ListPageFilters> | null) {
+      const newFilters = edits !== null ? { ...lastFilters, ...edits } : {};
       if (listId) localStorage.setItem(`filters-${listId}`, JSON.stringify(newFilters));
       return newFilters;
    };

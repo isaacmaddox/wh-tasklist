@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useSettings } from "@/lib/hooks/use-settings";
 import type { Task, WithId } from "@/lib/types";
 import { cn, DateFormatter, formatDateForInput, isTaskOverdue } from "@/lib/utils";
 import _ from "lodash";
@@ -15,7 +16,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 function includesIgnoreCase(searchString: string, searchTerm: string) {
-   return searchString.toLowerCase().replaceAll(/\s/g, "").includes(searchTerm.replaceAll(/\s/g, ""));
+   return searchString.toLowerCase().replaceAll(/\s/g, "").includes(searchTerm.toLowerCase().replaceAll(/\s/g, ""));
 }
 
 export function ListTasks() {
@@ -25,9 +26,25 @@ export function ListTasks() {
       list: { tasks },
       filters,
    } = ctx;
+   const { settings } = useSettings();
 
    const filteredTasks = Object.entries(tasks || {}).reduce((accumulator, [taskId, task]) => {
       if (filters.search && !includesIgnoreCase(task.name, filters.search)) return accumulator;
+      if (filters.startDate && task.due_date < filters.startDate) return accumulator;
+      if (filters.endDate && task.due_date > filters.endDate) return accumulator;
+      if (Object.values(filters).some((v) => v === true)) {
+         if (filters.showIncomplete && task.completed) return accumulator;
+         if (filters.showComplete && !task.completed) return accumulator;
+         if (filters.showFlagged && !task.flagged) return accumulator;
+         if (filters.showOverdue && !isTaskOverdue(task)) return accumulator;
+         if (filters.showDueSoon && isTaskOverdue(task)) return accumulator;
+         if (
+            filters.showDueSoon &&
+            !isTaskOverdue({ ...task, due_date: task.due_date - 86400000 * (settings.function?.soonDays || 3) })
+         ) {
+            return accumulator;
+         }
+      }
       return accumulator.concat({ ...task, _id: taskId });
    }, [] as WithId<Task>[]);
 
