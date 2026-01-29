@@ -116,6 +116,44 @@ export class ListService {
       }
    }
 
+   public async addCollaborator({
+      listId,
+      email,
+   }: AddCollaboratorArgs): Promise<ServiceReturnType<AddCollaboratorArgs>> {
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+         return {
+            success: false,
+            errors: {
+               email: "Please enter a valid email",
+            },
+         };
+      }
+
+      const shareRef = ref(db, `lists/${listId}/shares/${transformEmailToDatabase(email)}`);
+
+      try {
+         await set(shareRef, true);
+         return { success: true };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
+
+   public async removeCollaborator({
+      listId,
+      dbEmail,
+      permanent,
+   }: RemoveCollaboratorArgs): Promise<ServiceReturnType<RemoveCollaboratorArgs>> {
+      const shareRef = ref(db, `lists/${listId}/shares/${dbEmail}`);
+
+      try {
+         await set(shareRef, permanent ? null : false);
+         return { success: true };
+      } catch (e) {
+         return this.handleError(e);
+      }
+   }
+
    private handleError(error: unknown, options?: HandleErrorOptions): ServiceErrorType<unknown> {
       if (import.meta.env.VITE_ENV !== "development")
          Sentry.captureMessage(options?.message || `An error occurred`, {
@@ -148,4 +186,15 @@ export class ListService {
 interface CreateListArgs {
    userId: string;
    name: string;
+}
+
+interface AddCollaboratorArgs {
+   listId: string;
+   email: string;
+}
+
+interface RemoveCollaboratorArgs {
+   listId: string;
+   dbEmail: string;
+   permanent: boolean;
 }

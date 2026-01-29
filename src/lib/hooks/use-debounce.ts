@@ -15,5 +15,9 @@ export function useDebounce(defaultValue: string = "", callback: (value: string)
       timeoutRef.current = setTimeout(() => cb(value), 250);
    }, [value]);
 
+   useEffect(() => {
+      setValue(defaultValue);
+   }, [defaultValue]);
+
    return [value, onKeyDown] as const;
 }

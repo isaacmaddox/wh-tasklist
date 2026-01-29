@@ -40,7 +40,7 @@ export function List() {
       !user.email ||
       (list.owner_id !== user.uid && list?.shares?.[transformEmailToDatabase(user.email)] !== true)
    ) {
-      return <Navigate to="/" />;
+      return <Navigate to="/?noperm" />;
    }
 
    return (

@@ -1,10 +1,16 @@
 import { LoadingPage } from "@/components/loading-page";
 import { ListPageContext, type ListPageFilters } from "@/components/providers/list/context";
 import { Button } from "@/components/ui/button";
+import type { ServiceErrorType } from "@/lib/services";
 import { ListService } from "@/lib/services/list-service";
 import { TaskService } from "@/lib/services/task-service";
 import type { List } from "@/lib/types";
-import { formatDateForInput, getLocalDateFromInput } from "@/lib/utils";
+import {
+   formatDateForInput,
+   getLocalDateFromInput,
+   transformEmailFromDatabase,
+   transformEmailToDatabase,
+} from "@/lib/utils";
 import { useCallback, useEffect, useReducer, useState, type PropsWithChildren } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -18,7 +24,6 @@ type DeepPartial<T> = T extends object
         [P in keyof T]?: DeepPartial<T[P]>;
      }
    : T;
-//   ^?
 
 export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    const [list, setList] = useState<List | null>(null);
@@ -30,7 +35,23 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    const listService = ListService.getInstance();
    const taskService = TaskService.getInstance();
 
+   function updateNested(obj: Record<string, unknown>, edits: Partial<Record<keyof List, unknown>>) {
+      for (const [key, value] of Object.entries(edits)) {
+         if (typeof value !== "object") {
+            if (value === undefined) delete obj[key];
+            else obj[key] = value;
+         } else {
+            if (!obj[key]) obj[key] = {};
+            // @ts-expect-error Not sure how to fix this typing
+            updateNested(obj[key], edits[key]);
+         }
+      }
+   }
+
    function updateList(edits: DeepPartial<List>) {
+      // Have to make a new clone to ensure that no memory references are held
+      const listClone = structuredClone(list);
+
       if (list) {
          const modList = { ...list };
          updateNested(modList, edits);
@@ -38,51 +59,94 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       }
 
       return () => {
-         setList(list);
+         setList(listClone);
       };
    }
 
-   function updateNested(obj: Record<string, unknown>, edits: Partial<Record<keyof List, unknown>>) {
-      for (const [key, value] of Object.entries(edits)) {
-         if (typeof value !== "object") {
-            if (value === undefined) delete obj[key];
-            obj[key] = value;
-         } else {
-            if (!obj[key]) obj[key] = {};
-            // @ts-expect-error Not sure how to fix this
-            updateNested(obj[key], edits[key]);
-         }
+   function toastError(errors: ServiceErrorType["errors"]) {
+      for (const message of Object.values(errors || {})) {
+         toast.error(message);
+         return;
       }
    }
 
    async function updateName(newName: List["name"]) {
       if (!list) return;
 
-      const { errors } = await listService.editList(list.id, { name: newName });
+      const rollback = updateList({
+         name: newName,
+      });
 
-      if (errors) {
-         if (errors.general) toast.error(errors.general);
+      const { success, errors } = await listService.editList(list.id, { name: newName });
+
+      if (!success) {
+         rollback();
+         toastError(errors);
          return;
       }
 
-      if (!doLiveUpdates) {
-         updateList({
-            name: newName,
-         });
-      }
+      toast.success("Successfully renamed list");
    }
 
    async function doDeleteList() {
       if (!list) return;
 
-      const { errors } = await listService.deleteList(list.id);
+      const { success, errors } = await listService.deleteList(list.id);
 
-      if (errors) {
-         if (errors.general) toast.error(errors.general);
+      if (!success) {
+         toastError(errors);
          return;
       }
 
       navigate("/");
+      toast.success("Successfully deleted list");
+   }
+
+   async function doAddCollaborator(email: string) {
+      if (!list) return;
+
+      const rollback = updateList({
+         shares: {
+            [transformEmailToDatabase(email)]: true,
+         },
+      });
+
+      const { success, errors } = await listService.addCollaborator({
+         listId: list.id,
+         email,
+      });
+
+      if (!success) {
+         rollback();
+         toastError(errors);
+         return;
+      }
+
+      toast.success(`Successfully added ${email} as a collaborator`);
+   }
+
+   async function doRemoveCollaborator(dbEmail: string, permanent?: boolean) {
+      if (!list) return;
+
+      const rollback = updateList({
+         shares: {
+            [transformEmailToDatabase(dbEmail)]: permanent ? undefined : false,
+         },
+      });
+
+      const { success, errors } = await listService.removeCollaborator({
+         listId: list.id,
+         dbEmail,
+         permanent: permanent || false,
+      });
+
+      if (!success) {
+         rollback();
+         toastError(errors);
+         return;
+      }
+
+      toast.success(`Successfully removed ${transformEmailFromDatabase(dbEmail)} from collaborators list`);
    }
 
    async function doDeleteCompletedTasks() {
@@ -94,6 +158,8 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
          if (errors?.general) toast.error(errors.general);
          return;
       }
+
+      toast.success("Successfully deleted completed tasks");
 
       if (!doLiveUpdates) {
          setList((oldList) => {
@@ -109,6 +175,18 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    async function doAddTask(name: string, due: string, flagged: boolean, completed?: boolean) {
       if (!list) return;
 
+      const rollback = updateList({
+         tasks: {
+            tmp: {
+               list_id: list.id,
+               name,
+               due_date: getLocalDateFromInput(due),
+               flagged,
+               completed,
+            },
+         },
+      });
+
       const { success, errors, data } = await taskService.addTask({
          listId: list.id,
          name,
@@ -118,16 +196,15 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       });
 
       if (!success) {
-         for (const message of Object.values(errors || {})) {
-            toast.error(message);
-            return;
-         }
+         rollback();
+         toastError(errors);
+         return;
       }
 
       if (!doLiveUpdates) {
-         if (!data) return;
          updateList({
             tasks: {
+               tmp: undefined,
                [data.task._id]: data.task,
             },
          });
@@ -146,94 +223,73 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
          },
       });
 
-      const { errors } = await taskService.editTask(list.id, taskId, {
+      const { success, errors } = await taskService.editTask(list.id, taskId, {
          name,
          due,
       });
 
-      if (errors) {
+      if (!success) {
          rollback();
-         for (const error of Object.values(errors)) {
-            toast.error(error);
-            return;
-         }
+         toastError(errors);
       }
    }
 
    async function markTaskComplete(taskId: string, completed: boolean) {
       if (!list || !list.tasks) return;
-      const listBackup = { ...list };
-      const tmpTasks = { ...list.tasks };
-      tmpTasks[taskId].completed = true;
 
-      setList((oldList) => {
-         if (!oldList || !oldList.tasks) return oldList;
-         return {
-            ...oldList,
-            tasks: tmpTasks,
-         };
+      const rollback = updateList({
+         tasks: {
+            [taskId]: {
+               completed,
+            },
+         },
       });
 
-      const { errors } = await taskService.markTaskComplete(list?.id, taskId, completed);
+      const { success, errors } = await taskService.markTaskComplete(list?.id, taskId, completed);
 
-      if (errors) {
-         toast.error(errors.general || "Something went wrong");
-         setList(listBackup);
-         return;
-      }
-
-      if (!doLiveUpdates) {
-         setList((oldList) => {
-            if (!oldList || !oldList.tasks) return oldList;
-            return {
-               ...oldList,
-               tasks: {
-                  ...oldList.tasks,
-                  [taskId]: {
-                     ...oldList.tasks[taskId],
-                     completed,
-                  },
-               },
-            };
-         });
+      if (!success) {
+         rollback();
+         toastError(errors);
       }
    }
 
    async function doToggleFlag(taskId: string, flagged: boolean) {
       if (!list) return;
 
-      const { errors } = await taskService.toggleTaskFlagged(list.id, taskId, flagged);
+      const rollback = updateList({
+         tasks: {
+            [taskId]: {
+               flagged,
+            },
+         },
+      });
 
-      if (errors) {
-         if (errors.general) toast.error(errors.general);
+      const { success, errors } = await taskService.toggleTaskFlagged(list.id, taskId, flagged);
+
+      if (!success) {
+         rollback();
+         toastError(errors);
          return;
       }
 
-      if (!doLiveUpdates) {
-         setList((oldList) => {
-            if (!oldList || !oldList.tasks) return oldList;
-            return {
-               ...oldList,
-               tasks: {
-                  ...oldList.tasks,
-                  [taskId]: {
-                     ...oldList.tasks[taskId],
-                     flagged,
-                  },
-               },
-            };
-         });
-      }
+      toast.success(`Successfully ${flagged ? "flagged" : "removed flag from"} task`);
    }
 
    async function doDeleteTask(taskId: string) {
       if (!list || !list.tasks) return;
-      const task = { ...list.tasks[taskId] };
+      const task = { ...list.tasks?.[taskId] };
 
-      const { errors } = await taskService.deleteTask(list.id, taskId);
+      const rollback = updateList({
+         tasks: {
+            [taskId]: undefined,
+         },
+      });
 
-      if (errors) {
-         if (errors.general) toast.error(errors.general);
+      const { success, errors } = await taskService.deleteTask(list.id, taskId);
+
+      if (!success) {
+         rollback();
+         toastError(errors);
          return;
       }
 
@@ -245,18 +301,6 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
             },
          },
       });
-
-      if (!doLiveUpdates) {
-         setList((oldList) => {
-            if (!oldList) return oldList;
-            const modifiedTasks = { ...oldList.tasks };
-            delete modifiedTasks[taskId];
-            return {
-               ...oldList,
-               tasks: modifiedTasks,
-            };
-         });
-      }
    }
 
    const refreshList = useCallback(() => {
@@ -309,6 +353,8 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
             refreshList,
             updateName,
             doDeleteList,
+            doAddCollaborator,
+            doRemoveCollaborator,
             doLiveUpdates,
             dispatchDoLiveUpdates,
             doDeleteCompletedTasks,

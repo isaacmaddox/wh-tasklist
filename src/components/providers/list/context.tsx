@@ -16,6 +16,8 @@ interface ListPageContextValue {
    list: List;
    updateName: (newName: List["name"]) => Promise<void>;
    doDeleteList: () => Promise<void>;
+   doAddCollaborator: (email: string) => Promise<void>;
+   doRemoveCollaborator: (email: string, permanent?: boolean) => Promise<void>;
    doLiveUpdates: boolean;
    dispatchDoLiveUpdates: ActionDispatch<[enable: boolean]>;
    refreshList: () => void;

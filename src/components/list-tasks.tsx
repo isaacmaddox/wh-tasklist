@@ -25,6 +25,7 @@ export function ListTasks() {
    const {
       list: { tasks },
       filters,
+      dispatchFilters,
    } = ctx;
    const { settings } = useSettings();
 
@@ -61,6 +62,14 @@ export function ListTasks() {
             <p className="text-base leading-none font-semibold">Due Date</p>
          </li>
          <NewTask />
+         {orderedTasks.length === 0 && Object.keys(tasks || {}).length > 0 && (
+            <li className="text-muted-foreground col-span-full flex flex-wrap gap-2 items-center justify-center">
+               No tasks match your filters.{" "}
+               <Button variant="secondary" onClick={() => dispatchFilters(null)}>
+                  Clear filters
+               </Button>
+            </li>
+         )}
          {orderedTasks.map((task) => {
             return <ListItem key={task._id} task={task} />;
          })}

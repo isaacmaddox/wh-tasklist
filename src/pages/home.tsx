@@ -6,14 +6,20 @@ import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export function HomePage() {
    const [user] = useAuthState(auth);
+   const [searchParams, setSearchParams] = useSearchParams();
 
    useEffect(() => {
       document.title = "TaskList";
-   }, []);
+      if (searchParams.has("noperm")) {
+         toast.error("You do not have permission to view this list");
+         setSearchParams(new URLSearchParams());
+      }
+   }, [searchParams, setSearchParams]);
 
    return (
       <PageWrapper className="relative">

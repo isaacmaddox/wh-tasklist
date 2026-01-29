@@ -2,26 +2,31 @@ import { SettingsContext } from "@/components/providers/settings/context";
 import { auth } from "@/lib/firebase";
 import type { UserSettings } from "@/lib/types";
 import type { User } from "firebase/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 function getInitialSettings(user: User | null | undefined) {
-   return () => {
-      if (!user) return {};
+   if (!user) return {};
 
-      const fromLocalStorage = localStorage.getItem(`settings-${user.uid}`);
+   const fromLocalStorage = localStorage.getItem(`settings-${user.uid}`);
 
-      if (fromLocalStorage) {
-         return JSON.parse(fromLocalStorage) as UserSettings;
-      }
+   if (fromLocalStorage) {
+      return JSON.parse(fromLocalStorage) as UserSettings;
+   }
 
-      return {};
-   };
+   return {};
 }
 
 export function SettingsProvider({ children }: React.PropsWithChildren) {
    const [user] = useAuthState(auth);
-   const [settings, setSettings] = useState<UserSettings>(getInitialSettings(user));
+   const [settings, setSettings] = useState<UserSettings>({});
+
+   const changeSettings = useEffectEvent(setSettings);
+
+   useEffect(() => {
+      if (!user) return;
+      changeSettings(getInitialSettings(user));
+   }, [user]);
 
    useEffect(() => {
       if (!user) return;

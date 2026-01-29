@@ -14,7 +14,7 @@ import { auth } from "@/lib/firebase";
 import { transformEmailFromDatabase } from "@/lib/utils";
 import _ from "lodash";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 interface CollaboratorsModalProps {
@@ -23,12 +23,16 @@ interface CollaboratorsModalProps {
 
 export function CollaboratorsModal({ trigger }: CollaboratorsModalProps) {
    const [user] = useAuthState(auth);
+   const [email, setEmail] = useState<string>("");
    const ctx = useContext(ListPageContext);
    if (!ctx) throw new Error("Not in context");
-   const { list } = ctx;
+   const { list, doAddCollaborator, doRemoveCollaborator } = ctx;
+
    const canUserModifyCollaborators =
       user?.uid === list.owner_id ||
-      Object.entries(list.shares || {}).some(([email, allowed]) => user?.email === email && allowed);
+      Object.entries(list.shares || {}).some(
+         ([email, allowed]) => user?.email === transformEmailFromDatabase(email) && allowed,
+      );
 
    const groupedShares = _.groupBy(Object.entries(list.shares || {}), (e) => e[1]);
 
@@ -49,9 +53,27 @@ export function CollaboratorsModal({ trigger }: CollaboratorsModalProps) {
                   <Field>
                      <FieldLabel htmlFor="email">Collaborator email</FieldLabel>
                      <InputGroup>
-                        <InputGroupInput type="email" id="email" name="email" required />
+                        <InputGroupInput
+                           type="email"
+                           id="email"
+                           name="email"
+                           value={email}
+                           onChange={(e) => setEmail(e.currentTarget.value)}
+                           onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                 doAddCollaborator(email);
+                                 setEmail("");
+                              }
+                           }}
+                           required
+                        />
                         <InputGroupAddon align="inline-end">
-                           <InputGroupButton variant="default">
+                           <InputGroupButton
+                              variant="default"
+                              onClick={() => {
+                                 doAddCollaborator(email);
+                                 setEmail("");
+                              }}>
                               <PlusIcon /> Add
                            </InputGroupButton>
                         </InputGroupAddon>
@@ -67,7 +89,10 @@ export function CollaboratorsModal({ trigger }: CollaboratorsModalProps) {
                         <li key={email} className="grid grid-cols-subgrid col-span-full items-center">
                            {transformEmailFromDatabase(email)}
                            {list.owner_id === user?.uid && (
-                              <Button size="icon-xs" variant="ghost">
+                              <Button
+                                 size="icon-xs"
+                                 variant="ghost"
+                                 onClick={(e) => doRemoveCollaborator(email, e.shiftKey ? true : false)}>
                                  <XIcon />
                                  <span className="sr-only">Remove collaborator</span>
                               </Button>
@@ -87,11 +112,17 @@ export function CollaboratorsModal({ trigger }: CollaboratorsModalProps) {
                                  {transformEmailFromDatabase(email)}
                                  {list.owner_id === user?.uid && (
                                     <>
-                                       <Button size="icon-xs" variant="ghost">
+                                       <Button
+                                          size="icon-xs"
+                                          variant="ghost"
+                                          onClick={() => doRemoveCollaborator(email, true)}>
                                           <XIcon />
                                           <span className="sr-only">Remove permanently</span>
                                        </Button>
-                                       <Button size="icon-xs" variant="ghost">
+                                       <Button
+                                          size="icon-xs"
+                                          variant="ghost"
+                                          onClick={() => doAddCollaborator(transformEmailFromDatabase(email))}>
                                           <PlusIcon />
                                           <span className="sr-only">Add collaborator</span>
                                        </Button>

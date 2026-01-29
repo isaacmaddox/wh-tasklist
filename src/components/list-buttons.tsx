@@ -14,6 +14,8 @@ export function ListButtons() {
    if (!ctx) throw new Error("Not in context");
    const { list, doDeleteList, doLiveUpdates, dispatchDoLiveUpdates, refreshList } = ctx;
 
+   const collaboratorCount = Object.entries(list.shares || {}).filter(([, access]) => access).length;
+
    return (
       <ul className="flex items-center pt-1 gap-2 w-full pb-3 border-b">
          <li>
@@ -50,7 +52,7 @@ export function ListButtons() {
                trigger={
                   <Button variant="outline">
                      <UsersIcon />
-                     Collaborators ({Object.keys(list.shares || {}).length})
+                     Collaborators ({collaboratorCount})
                   </Button>
                }
             />
