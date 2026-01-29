@@ -13,6 +13,13 @@ interface ListPageProviderProps extends PropsWithChildren {
    listId?: string;
 }
 
+type DeepPartial<T> = T extends object
+   ? {
+        [P in keyof T]?: DeepPartial<T[P]>;
+     }
+   : T;
+//   ^?
+
 export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    const [list, setList] = useState<List | null>(null);
    const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -22,6 +29,31 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
 
    const listService = ListService.getInstance();
    const taskService = TaskService.getInstance();
+
+   function updateList(edits: DeepPartial<List>) {
+      if (list) {
+         const modList = { ...list };
+         updateNested(modList, edits);
+         setList(modList);
+      }
+
+      return () => {
+         setList(list);
+      };
+   }
+
+   function updateNested(obj: Record<string, unknown>, edits: Partial<Record<keyof List, unknown>>) {
+      for (const [key, value] of Object.entries(edits)) {
+         if (typeof value !== "object") {
+            if (value === undefined) delete obj[key];
+            obj[key] = value;
+         } else {
+            if (!obj[key]) obj[key] = {};
+            // @ts-expect-error Not sure how to fix this
+            updateNested(obj[key], edits[key]);
+         }
+      }
+   }
 
    async function updateName(newName: List["name"]) {
       if (!list) return;
@@ -34,12 +66,8 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       }
 
       if (!doLiveUpdates) {
-         setList((oldList) => {
-            if (!oldList) return oldList;
-            return {
-               ...oldList,
-               name: newName,
-            };
+         updateList({
+            name: newName,
          });
       }
    }
@@ -97,15 +125,11 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
       }
 
       if (!doLiveUpdates) {
-         setList((oldList) => {
-            if (!oldList || !data) return oldList;
-            return {
-               ...oldList,
-               tasks: {
-                  ...oldList.tasks,
-                  [data.task._id]: data?.task,
-               },
-            };
+         if (!data) return;
+         updateList({
+            tasks: {
+               [data.task._id]: data.task,
+            },
          });
       }
    }
@@ -113,43 +137,48 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
    async function doEditTask(taskId: string, name: string, due: string) {
       if (!list) return;
 
+      const rollback = updateList({
+         tasks: {
+            [taskId]: {
+               name,
+               due_date: getLocalDateFromInput(due),
+            },
+         },
+      });
+
       const { errors } = await taskService.editTask(list.id, taskId, {
          name,
          due,
       });
 
       if (errors) {
+         rollback();
          for (const error of Object.values(errors)) {
             toast.error(error);
             return;
          }
       }
-
-      if (!doLiveUpdates) {
-         setList((oldList) => {
-            if (!oldList || !oldList.tasks) return oldList;
-            return {
-               ...oldList,
-               tasks: {
-                  ...oldList.tasks,
-                  [taskId]: {
-                     ...oldList.tasks[taskId],
-                     name,
-                     due: getLocalDateFromInput(due),
-                  },
-               },
-            };
-         });
-      }
    }
 
    async function markTaskComplete(taskId: string, completed: boolean) {
-      if (!list) return;
+      if (!list || !list.tasks) return;
+      const listBackup = { ...list };
+      const tmpTasks = { ...list.tasks };
+      tmpTasks[taskId].completed = true;
+
+      setList((oldList) => {
+         if (!oldList || !oldList.tasks) return oldList;
+         return {
+            ...oldList,
+            tasks: tmpTasks,
+         };
+      });
 
       const { errors } = await taskService.markTaskComplete(list?.id, taskId, completed);
 
       if (errors) {
          toast.error(errors.general || "Something went wrong");
+         setList(listBackup);
          return;
       }
 
