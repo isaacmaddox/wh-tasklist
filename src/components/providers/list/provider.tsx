@@ -174,6 +174,10 @@ export function ListPageProvider({ listId, children }: ListPageProviderProps) {
 
    async function doAddTask(name: string, due: string, flagged: boolean, completed?: boolean) {
       if (!list) return;
+      if (!name || !due) {
+         toast.error("Tasks must have a name and due date");
+         return;
+      }
 
       const rollback = updateList({
          tasks: {
