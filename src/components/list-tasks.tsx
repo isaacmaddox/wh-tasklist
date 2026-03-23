@@ -30,7 +30,8 @@ export function ListTasks() {
    const { settings } = useSettings();
 
    const filteredTasks = Object.entries(tasks || {}).reduce((accumulator, [taskId, task]) => {
-      if (filters.search && !includesIgnoreCase(task.name, filters.search)) return accumulator;
+      if (filters.search && !includesIgnoreCase(task.name, filters.search) && filters.search !== taskId)
+         return accumulator;
       if (filters.startDate && task.due_date < filters.startDate) return accumulator;
       if (filters.endDate && task.due_date > filters.endDate) return accumulator;
       if (Object.values(filters).some((v) => v === true)) {

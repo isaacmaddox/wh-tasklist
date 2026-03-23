@@ -1,4 +1,5 @@
 import { ConfirmModal } from "@/components/modals/confirm";
+import { RandomTaskModal } from "@/components/modals/random-task";
 import { ListPageContext } from "@/components/providers/list/context";
 import {
    DropdownMenu,
@@ -6,7 +7,7 @@ import {
    DropdownMenuItem,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TrashIcon } from "lucide-react";
+import { DicesIcon, TrashIcon } from "lucide-react";
 import { useContext } from "react";
 
 interface ListActionsProps {
@@ -44,6 +45,14 @@ export function ListActions({ trigger }: ListActionsProps) {
                   </>
                }
                buttonVariant="destructive"
+            />
+            <RandomTaskModal
+               trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                     <DicesIcon />
+                     Pick Random Task
+                  </DropdownMenuItem>
+               }
             />
          </DropdownMenuContent>
       </DropdownMenu>
